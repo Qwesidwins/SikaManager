@@ -6,8 +6,8 @@ import { triggerHaptic } from '@/lib/haptics';
 import type { JournalEntry, Transaction, Category, JournalRating } from '@/domain/types';
 
 interface JournalViewProps {
-  onOpenQuickAdd: () => void;
-  onShowToast: (msg: string, onUndo: () => void) => void;
+  onOpenQuickAdd?: (() => void) | undefined;
+  onShowToast: (msg: string, onUndo?: (() => void) | undefined) => void;
 }
 
 export const JournalView: React.FC<JournalViewProps> = ({ onOpenQuickAdd: _onOpenQuickAdd, onShowToast }) => {

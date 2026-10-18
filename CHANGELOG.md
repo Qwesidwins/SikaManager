@@ -2,6 +2,25 @@
 
 All notable changes to the SikaManger codebase are documented here chronologically.
 
+## [Milestone (j), (k), (l)] - 2026-10-18
+
+### Completed
+- **App Shell & PWA Hardening (`/src/App.tsx`, `/src/pwa`, `/src/lib/storage.ts`)**:
+  - `src/App.tsx`: Wired application shell routing all sub-views (Home, Activity, Journal, Insights, Budgets, Settings, LockScreen, OnboardingFlow) with 5-second undo toast manager and centralized transaction mutation synchronization.
+  - `src/pwa/usePwaInstall.ts`: Hook capturing `beforeinstallprompt` for custom PWA install promotions.
+  - `src/pwa/IOSInstallGuide.tsx`: Clean Apple iOS modal providing visual step-by-step instructions for adding SikaManger to iPhone Home Screen.
+  - `src/pwa/UpdateToast.tsx`: Service worker update detection component triggering seamless skip-waiting page reload.
+  - `src/lib/storage.ts`: Automatic persistent storage quota registration (`navigator.storage.persist()`).
+  - Generated PWA icon set (`pwa-192x192.png`, `pwa-512x512.png`, `maskable-icon-512x512.png`, `apple-touch-icon.png`, `favicon.ico`, `favicon.svg`) with Ghanaian cedi emblem and navy/gold brand colors.
+- **Accessibility & Motion Polish (`/src/index.css`)**:
+  - `prefers-reduced-motion` compliance disabling animations and transitions for users with motion sensitivities.
+  - 44px minimum tap targets across all interactive elements and keyboard accessibility.
+  - Warm Dignified Finance palette tokens maintaining WCAG AA contrast.
+- **Verification & Documentation**:
+  - 97 tests passing across 20 test suites with 99.59% statements and 100% lines/functions coverage on financial domain calculations.
+  - Production build (`npm run build`) generates offline precache manifest and service worker bundles.
+  - Complete `README.md` with formula breakdowns, deployment guides, security details, and extension points.
+
 ## [Milestone (i)] - 2026-10-18
 
 ### Completed

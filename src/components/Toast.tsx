@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 
 interface ToastProps {
   message: string;
-  onUndo?: () => void;
+  onUndo?: (() => void) | undefined;
   onDismiss: () => void;
-  durationMs?: number;
+  durationMs?: number | undefined;
 }
 
 export const Toast: React.FC<ToastProps> = ({

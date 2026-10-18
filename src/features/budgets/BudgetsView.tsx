@@ -7,8 +7,8 @@ import { triggerHaptic } from '@/lib/haptics';
 import type { Budget, Category, Transaction, BudgetPeriod, Settings } from '@/domain/types';
 
 interface BudgetsViewProps {
-  onBack?: () => void;
-  onOpenQuickAdd: () => void;
+  onBack?: (() => void) | undefined;
+  onOpenQuickAdd?: (() => void) | undefined;
 }
 
 export const BudgetsView: React.FC<BudgetsViewProps> = ({ onBack, onOpenQuickAdd: _onOpenQuickAdd }) => {

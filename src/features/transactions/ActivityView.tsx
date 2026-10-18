@@ -14,7 +14,7 @@ import type {
 
 interface ActivityViewProps {
   onOpenQuickAdd: () => void;
-  onShowToast: (msg: string, onUndo: () => void) => void;
+  onShowToast: (msg: string, onUndo?: (() => void) | undefined) => void;
 }
 
 export const ActivityView: React.FC<ActivityViewProps> = ({ onOpenQuickAdd, onShowToast }) => {
