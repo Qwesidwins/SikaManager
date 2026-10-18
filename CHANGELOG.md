@@ -2,6 +2,16 @@
 
 All notable changes to the SikaManger codebase are documented here chronologically.
 
+## [Milestone (i)] - 2026-10-18
+
+### Completed
+- **Lock Screen & Onboarding Flow (`/src/features/lock`, `/src/features/onboarding`)**:
+  - `src/features/lock/LockScreen.tsx`: Security gate with tactile numeric keypad, masked dot progress, WebAuthn platform biometric check, rate limiting with 60-second cooldown timer after 5 failed attempts, and error vibration feedback.
+  - `src/features/onboarding/OnboardingFlow.tsx`: Under 90-second setup wizard calibrating currency/locale, default Ghanaian accounts (MoMo, Cash, Bank, Savings) with starting balances, variable vs fixed income mode, essential monthly expenses, savings buffer target, optional passcode, and browser persistent storage request (`navigator.storage.persist()`).
+- **Verification**:
+  - 95 tests passing across 19 test suites.
+  - Strict TypeScript check (`tsc --noEmit`) passes with 0 errors.
+
 ## [Milestone (h)] - 2026-10-18
 
 ### Completed
