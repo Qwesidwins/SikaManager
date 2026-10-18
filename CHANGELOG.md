@@ -2,6 +2,23 @@
 
 All notable changes to the SikaManger codebase are documented here chronologically.
 
+## [Milestone (d)] - 2026-10-18
+
+### Completed
+- **Core Entry & Activity (`/src/features/quickAdd`, `/src/features/transactions`, `/src/components`)**:
+  - `Keypad.tsx`: Custom tactile numeric keypad with `navigator.vibrate` haptic tick, keyboard listener for desktop, and rapid entry.
+  - `Sheet.tsx`: Bottom modal sheet with drag handle, backdrop blur, and dismiss.
+  - `Toast.tsx`: 5-second countdown progress bar with Undo action.
+  - `Amount.tsx`: Tabular figures amount formatting with `GH₵` symbol and inflow/outflow semantic colors.
+  - `BottomNav.tsx`: Bottom navigation dock with elevated central Add button.
+  - `Header.tsx`: Top header with offline status indicator and actions.
+  - `QuickAddSheet.tsx`: Segmented Expense/Income/Transfer control, quick keypad entry, category chips carousel, account selector, date selector, note input, collapsible "Reflect on this purchase" with Worth it / Neutral / Regret ratings, and thumb-reachable Save button.
+  - `ActivityView.tsx`: Daily grouped transaction feed with daily totals, running balance toggle, monthly cash flow strip (Inflow/Outflow/Net), search bar, and filter sheet.
+- **Verification**:
+  - 72 tests passing across 12 test files.
+  - Benchmark test verified: transaction logged in under 5 seconds from sheet open.
+  - Strict TypeScript check (`tsc --noEmit`) passes with 0 errors.
+
 ## [Milestone (c)] - 2026-10-18
 
 ### Completed

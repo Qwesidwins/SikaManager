@@ -35,24 +35,24 @@ export interface Transaction {
   amountMinor: number; // Always positive integer
   currency: string;
   accountId: string;
-  transferAccountId?: string | null;
-  categoryId?: string | null;
+  transferAccountId?: string | null | undefined;
+  categoryId?: string | null | undefined;
   date: string; // ISO UTC
-  note?: string;
+  note?: string | undefined;
   createdAt: string;
   updatedAt: string;
-  deletedAt?: string | null; // Soft delete
+  deletedAt?: string | null | undefined; // Soft delete
 }
 
 export interface JournalEntry {
   id: string;
-  transactionId?: string | null;
+  transactionId?: string | null | undefined;
   body: string;
-  rating: JournalRating;
-  prompt?: string | null;
+  rating?: JournalRating | undefined;
+  prompt?: string | null | undefined;
   createdAt: string;
   updatedAt: string;
-  deletedAt?: string | null;
+  deletedAt?: string | null | undefined;
 }
 
 export interface Budget {
@@ -63,7 +63,7 @@ export interface Budget {
   startsOn: string; // ISO date YYYY-MM-DD
   createdAt: string;
   updatedAt: string;
-  deletedAt?: string | null;
+  deletedAt?: string | null | undefined;
 }
 
 export interface Goal {
@@ -71,10 +71,10 @@ export interface Goal {
   name: string;
   targetMinor: number;
   currentMinor: number;
-  targetDate?: string | null;
+  targetDate?: string | null | undefined;
   createdAt: string;
   updatedAt: string;
-  deletedAt?: string | null;
+  deletedAt?: string | null | undefined;
 }
 
 export interface Settings {
@@ -84,10 +84,10 @@ export interface Settings {
   weekStart: WeekStart;
   essentialMonthlyMinor: number;
   savingsTargetMinor: number;
-  passcodeHash?: string | null;
+  passcodeHash?: string | null | undefined;
   lockEnabled: boolean;
   biometricEnabled: boolean;
-  lastBackupAt?: string | null;
+  lastBackupAt?: string | null | undefined;
   onboardingDone: boolean;
 }
 
