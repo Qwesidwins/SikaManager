@@ -29,3 +29,4 @@ export default [
     ignores: ['dist/**', 'node_modules/**', 'coverage/**', 'stitch_sikamanager_pwa_ui_design/**'],
   },
 ];
+

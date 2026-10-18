@@ -90,3 +90,4 @@ export interface Settings {
   lastBackupAt?: string | null;
   onboardingDone: boolean;
 }
+

@@ -34,3 +34,4 @@ describe('Domain: Savings Projection', () => {
     expect(res.schedule).toHaveLength(0);
   });
 });
+

@@ -2,6 +2,18 @@
 
 All notable changes to the SikaManger codebase are documented here chronologically.
 
+## [Milestone (c)] - 2026-10-18
+
+### Completed
+- **Dexie Schema & Local-First Database Layer (`/src/db`)**:
+  - `schema.ts`: Dexie database class `SikaDatabase` implementing Version 1 schema with exact tables (`accounts`, `categories`, `transactions`, `journalEntries`, `budgets`, `goals`, `settings`) and indexes (`accountId`, `categoryId`, `date`, `type`, `deletedAt`, `rating`).
+  - `database.ts`: Database singleton instance and `clearAllDatabaseData()` helper for tests and data resets.
+  - `seed.ts`: Ghanaian default categories (Food, Trotro/Taxi, Airtime/Data, Susu, Utilities, Health, Family, Freelance, Trade) and accounts (MTN MoMo, Cash in Hand, Bank Account, Emergency Savings).
+  - Repositories: Fully typed data access layer with soft-delete handling for `accountsRepo`, `categoriesRepo`, `transactionsRepo`, `journalRepo`, `budgetsRepo`, `goalsRepo`, and `settingsRepo`.
+- **Verification**:
+  - 67 tests passing across 10 test suites.
+  - Strict TypeScript compilation check passes with 0 errors.
+
 ## [Milestone (a) & (b)] - 2026-10-18
 
 ### Completed
@@ -25,3 +37,4 @@ All notable changes to the SikaManger codebase are documented here chronological
   - 60 unit tests across 8 test suites passing.
   - 100% domain function coverage and 99.6% statement coverage.
   - Strict TypeScript check (`tsc --noEmit`) passes with 0 errors.
+

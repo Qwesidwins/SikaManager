@@ -13,3 +13,4 @@ if (typeof window !== 'undefined' && window.crypto && !window.crypto.subtle) {
   // @ts-expect-error test shim
   window.crypto.getRandomValues = webcrypto.getRandomValues.bind(webcrypto);
 }
+

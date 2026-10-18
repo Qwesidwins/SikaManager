@@ -101,3 +101,4 @@ export function safeToSpendToday(input: SafeToSpendInput): SafeToSpendResult {
     isNegative: todaySafeMinor < 0,
   };
 }
+

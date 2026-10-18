@@ -48,3 +48,4 @@ export function runwayDays(balanceMinor: number, avgDailySpendMinor: number): nu
 
   return Math.floor(balanceMinor / avgDailySpendMinor);
 }
+
