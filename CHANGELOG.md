@@ -2,6 +2,20 @@
 
 All notable changes to the SikaManger codebase are documented here chronologically.
 
+## [Milestone (g)] - 2026-10-18
+
+### Completed
+- **Insights & Affordability (`/src/features/insights/InsightsView.tsx`)**:
+  - Affordability simulator computing simulated runway days, simulated safe-to-spend allowance, and emergency buffer safety impact for planned purchases in real time without prescribing or judging.
+  - "Wait 48 hours" mindful decision toggle saving purchase reflection to the Journal with reminder tag.
+  - Category spending breakdown donut chart using Recharts with legend and percentage distribution.
+  - 6-month historical cashflow comparison bar chart (Inflow vs Outflow vs Net).
+  - Emergency fund health card displaying months of essentials covered and progress bar.
+  - Compound savings projection calculator with interactive sliders for monthly contribution, expected annual return, and timeline (months).
+- **Verification**:
+  - 80 tests passing across 16 test files.
+  - Strict TypeScript check (`tsc --noEmit`) passes with 0 errors.
+
 ## [Milestone (f)] - 2026-10-18
 
 ### Completed
