@@ -9,7 +9,7 @@ export const IncomeModeSchema = z.enum(['fixed', 'variable']);
 export const WeekStartSchema = z.union([z.literal(0), z.literal(1)]);
 
 export const AccountSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().min(1),
   name: z.string().min(1, 'Account name is required'),
   type: AccountTypeSchema,
   currency: z.string().min(3).max(4),

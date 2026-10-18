@@ -2,6 +2,18 @@
 
 All notable changes to the SikaManger codebase are documented here chronologically.
 
+## [Milestone (h)] - 2026-10-18
+
+### Completed
+- **Backup, Restore, Passcode & CSV Export (`/src/crypto`, `/src/features/backup`, `/src/features/settings`)**:
+  - `src/crypto/encryption.ts`: Lossless backup encryption & decryption using native Web Crypto PBKDF2 (SHA-256, 600,000 iterations, random salt) + AES-GCM (256-bit) encapsulated in `.sikamanger` JSON envelopes.
+  - `src/crypto/passcode.ts`: Passcode hashing and constant-time verification using Web Crypto PBKDF2 (100,000 iterations, random salt).
+  - `src/features/backup/backupService.ts`: Lossless schema-validated payload exporter, transactional database restoration with 'Replace all' vs 'Merge by id' modes, and RFC 4180 compliant CSV generator formatted for Excel and Google Sheets.
+  - `src/features/settings/SettingsView.tsx`: Settings management screen covering Currency, Locale, Income Mode calibration, Week Start day, Essential Expenses & Savings Buffer targets, Passcode lock toggles, Encrypted Backup download/upload, CSV export, and Danger Zone database wipe with typed 'DELETE' confirmation.
+- **Verification**:
+  - 91 tests passing across 18 test suites.
+  - Strict TypeScript check (`tsc --noEmit`) passes with 0 errors.
+
 ## [Milestone (g)] - 2026-10-18
 
 ### Completed

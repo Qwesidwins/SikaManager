@@ -67,10 +67,18 @@ export const transactionsRepo = {
     return db.transactions.get(id);
   },
 
-  async create(transaction: Transaction): Promise<string> {
+  async create(
+    transaction: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'> & {
+      id?: string;
+      createdAt?: string;
+      updatedAt?: string;
+    }
+  ): Promise<string> {
     const now = new Date().toISOString();
+    const id = transaction.id || crypto.randomUUID();
     const fullTransaction: Transaction = {
       ...transaction,
+      id,
       createdAt: transaction.createdAt || now,
       updatedAt: transaction.updatedAt || now,
     };
