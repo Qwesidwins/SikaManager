@@ -2,6 +2,18 @@
 
 All notable changes to the SikaManger codebase are documented here chronologically.
 
+## [Milestone (f)] - 2026-10-18
+
+### Completed
+- **Journal & Reflections Timeline (`/src/features/journal/JournalView.tsx`)**:
+  - Reflections feed organized newest first with emotional rating pills (Worth it, Neutral, Learning & Regret) and linked transaction details (category, note, formatted amount).
+  - Rating filter chips ("All", "Worth it", "Neutral", "Learning & Regret") with live entry counts.
+  - Standalone reflection creation ("+ Write") for logging mindful spending decisions, resisted purchases, and daily observations without linking to a transaction.
+  - First-of-the-month 3-question guided review prompt ("Monthly Pulse") saved as a unified reflection entry.
+- **Verification**:
+  - 78 tests passing across 15 test files.
+  - Strict TypeScript check (`tsc --noEmit`) passes with 0 errors.
+
 ## [Milestone (e)] - 2026-10-18
 
 ### Completed

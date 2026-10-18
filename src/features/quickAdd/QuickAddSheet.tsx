@@ -49,10 +49,10 @@ export const QuickAddSheet: React.FC<QuickAddSheetProps> = ({ isOpen, onClose, o
     }
   }, [selectedAccountId]);
 
+  // Load accounts and categories on open
   useEffect(() => {
     if (isOpen) {
       loadData();
-      // Reset state on open
       setAmountStr('0');
       setNote('');
       setShowNoteField(false);
@@ -61,7 +61,8 @@ export const QuickAddSheet: React.FC<QuickAddSheetProps> = ({ isOpen, onClose, o
       setReflectionNote('');
       setDate(new Date().toISOString());
     }
-  }, [isOpen, loadData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   // Filter categories by transaction type
   const availableCategories = useMemo(() => {
