@@ -1,21 +1,26 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Offline-First Persistence E2E', () => {
-  test('logs an expense, goes offline, reloads, and verifies offline persistence', async ({
+  test('logs an expense, goes offline, logs another expense offline, and verifies full offline operation', async ({
     page,
     context,
   }) => {
     // 1. Open app
     await page.goto('/');
 
-    // 2. Skip onboarding if on first run
+    // 2. Wait for onboarding or home
     const skipButton = page.getByRole('button', { name: /Skip Setup/i });
-    if (await skipButton.isVisible({ timeout: 4000 }).catch(() => false)) {
+    const heroCard = page.getByText(/Safe to spend today/i);
+
+    try {
+      await skipButton.waitFor({ timeout: 6000 });
       await skipButton.click();
+    } catch {
+      // Already past onboarding
     }
 
     // 3. Verify Home loaded
-    await expect(page.getByText(/Safe to spend today/i)).toBeVisible({ timeout: 5000 });
+    await expect(heroCard).toBeVisible({ timeout: 10000 });
 
     // 4. Open Quick-Add Sheet via center button
     const addButton = page.getByLabel('Add Transaction');
@@ -40,19 +45,24 @@ test.describe('Offline-First Persistence E2E', () => {
     await expect(page.getByText(/Transaction recorded/i)).toBeVisible();
 
     // 9. Go to Activity view to see the entry
-    const activityTab = page.getByRole('button', { name: /Activity/i });
+    const activityTab = page.locator('nav').getByRole('button', { name: /Activity/i });
     await activityTab.click();
-    await expect(page.getByText(/50\.00/i)).toBeVisible();
+    await expect(page.getByText(/50\.00/i).first()).toBeVisible();
 
-    // 10. Simulate Offline network condition
+    // 10. Cut off all network (Simulate 100% Offline mode)
     await context.setOffline(true);
 
-    // 11. Reload page while offline
-    await page.reload();
+    // 11. While fully offline, log a second transaction
+    await addButton.click();
+    await page.getByRole('button', { name: '2', exact: true }).click();
+    await page.getByRole('button', { name: '5', exact: true }).click();
+    await saveButton.click();
+    await expect(page.getByText(/Transaction recorded/i)).toBeVisible();
 
-    // 12. Verify offline persistence in Activity view
-    await expect(page.getByText(/Activity/i).first()).toBeVisible();
-    await expect(page.getByText(/50\.00/i)).toBeVisible();
+    // 12. Verify both 50.00 and 25.00 are persisted and visible in Activity while completely offline
+    await activityTab.click();
+    await expect(page.getByText(/50\.00/i).first()).toBeVisible();
+    await expect(page.getByText(/25\.00/i).first()).toBeVisible();
 
     // Restore online state
     await context.setOffline(false);

@@ -14,11 +14,14 @@ export default defineConfig({
   projects: [
     {
       name: 'Mobile Chrome',
-      use: { ...devices['Pixel 5'] },
+      use: {
+        ...devices['Pixel 5'],
+        channel: 'msedge',
+      },
     },
   ],
   webServer: {
-    command: 'npm run dev',
+    command: 'npm run preview',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 30000,
