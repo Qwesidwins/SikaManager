@@ -2,6 +2,17 @@
 
 All notable changes to the SikaManger codebase are documented here chronologically.
 
+## [Milestone (e)] - 2026-10-18
+
+### Completed
+- **Home Dashboard & Budgets (`/src/features/home`, `/src/features/budgets`, `/src/components/Ring.tsx`)**:
+  - `Ring.tsx`: SVG circular progress meter with dynamic color tokens, check icons for 100% completion, and tabular numeric label overlays.
+  - `HomeView.tsx`: Complete home dashboard incorporating Safe-to-spend Hero card with daily allowance formula, 3-metric triad (Total Balance, Cash Runway in days, Emergency Buffer progress), top 4 active budget progress cards, dynamic weekly insight, 14-day stale backup alert banner, and time-aware greeting.
+  - `BudgetsView.tsx`: Full budget management interface with progress bars, remaining allowances, over-budget indicators styled in warm caution (avoiding alarm red), and add/edit modal sheet.
+- **Verification**:
+  - 76 tests passing across 14 test files.
+  - Strict TypeScript check (`tsc --noEmit`) passes with 0 errors.
+
 ## [Milestone (d)] - 2026-10-18
 
 ### Completed
