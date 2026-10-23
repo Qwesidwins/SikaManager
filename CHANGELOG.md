@@ -2,6 +2,34 @@
 
 All notable changes to the SikaManger codebase are documented here chronologically.
 
+## [Simple MVP Milestone] - Active Branch (`simple-mvp`)
+
+### Completed
+- **Created Isolated Branch (`simple-mvp`)**:
+  - Preserved comprehensive architecture (encryption, biometrics, 97 domain/crypto tests, offline PWA setup) safely in branch `full-implementation`.
+  - Started fresh iterative track focusing on user's core MVP direction: immediate expense/income logging, live balance tracking, and visual analytics.
+- **Fast Expense & Income Logging Modal (`/src/features/simpleMvp/AddTransactionModal.tsx`)**:
+  - Clean bottom-sheet modal with quick toggle between **Expense** and **Income**.
+  - Direct GH₵ amount entry with auto-sanitization to minor units (pesewas).
+  - Categorized chips tailored to Ghanaian context (Food, Commute & Fuel, Utilities, Housing, Shopping, Healthcare, Freelance, Trade, Gifts).
+  - Date selector and optional note field.
+  - Tactile haptic feedback and instant IndexedDB persistence via Dexie.
+- **Home & Transaction Tracker View (`/src/features/simpleMvp/HomeView.tsx`)**:
+  - Total Balance hero card with dual Inflow (green) and Outflow (red) summary strips.
+  - Fast search filter and type segmented control (`All`, `Expense`, `Income`).
+  - Scrollable transaction feed with date formatting, categorized icons, and quick-delete action.
+- **Insights & Visual Analytics View (`/src/features/simpleMvp/InsightsView.tsx`)**:
+  - Key financial metrics: Total Inflow, Total Outflow, Net Savings, and Savings Rate percentage.
+  - Interactive **Income vs. Expense** comparison bar chart via Recharts.
+  - Category spending breakdown donut chart with contextual percentage badges and color-coded legend.
+- **Simple App Shell & Navigation Dock (`/src/features/simpleMvp/BottomNav.tsx`, `/src/App.tsx`)**:
+  - Streamlined 2-view navigation (`Transactions` and `Insights`) centered around an elevated `+ Add` button.
+  - Automatic seed initialization on first launch without any onboarding gates or lock screens.
+- **Testing & Verification**:
+  - Component tests (`tests/components/simpleMvp.test.tsx` and `tests/components/app.test.tsx`) verifying end-to-end income/expense addition, balance derivation, and analytics rendering.
+  - `tsc --noEmit` clean with 0 TypeScript errors.
+
+
 ## [Milestone (j), (k), (l)] - 2026-10-18
 
 ### Completed

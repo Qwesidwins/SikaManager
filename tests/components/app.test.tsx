@@ -3,7 +3,6 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import App from '@/App';
 import { clearAllDatabaseData } from '@/db/database';
 import { seedInitialDataIfNeeded } from '@/db/seed';
-import { settingsRepo } from '@/db';
 
 describe('Component: App Root & Navigation Shell', () => {
   beforeEach(async () => {
@@ -11,57 +10,29 @@ describe('Component: App Root & Navigation Shell', () => {
     await seedInitialDataIfNeeded();
   });
 
-  it('renders onboarding on fresh install and proceeds to home when skipped', async () => {
+  it('renders simple MVP dashboard on launch', async () => {
     render(<App />);
 
-    // Should detect onboarding not completed and show OnboardingFlow
     await waitFor(() => {
-      expect(screen.getByText('Welcome to SikaManger')).toBeInTheDocument();
-    });
-
-    // Skip onboarding
-    const skipBtn = screen.getByRole('button', { name: /Skip Setup/i });
-    fireEvent.click(skipBtn);
-
-    // Should land on Home dashboard
-    await waitFor(() => {
-      expect(screen.getByText(/Safe to spend today/i)).toBeInTheDocument();
-      expect(screen.getByText(/Runway/i)).toBeInTheDocument();
+      expect(screen.getByText('SikaManger')).toBeInTheDocument();
+      expect(screen.getByText('Total Balance')).toBeInTheDocument();
     });
   });
 
-  it('navigates across bottom tabs and opens quick-add sheet', async () => {
-    // Mark onboarding done
-    await settingsRepo.set('onboardingDone', true);
-
+  it('navigates across simple MVP tabs', async () => {
     render(<App />);
 
     await waitFor(() => {
-      expect(screen.getByText(/Safe to spend today/i)).toBeInTheDocument();
+      expect(screen.getByText('Total Balance')).toBeInTheDocument();
     });
 
-    // Tap Activity tab
-    const activityTab = screen.getByRole('button', { name: /Activity/i });
-    fireEvent.click(activityTab);
+    // Tap Insights tab
+    const insightsTab = screen.getByRole('button', { name: /Insights/i });
+    fireEvent.click(insightsTab);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Toggle running balance/i })).toBeInTheDocument();
-    });
-
-    // Tap Journal tab
-    const journalTab = screen.getByRole('button', { name: /Journal/i });
-    fireEvent.click(journalTab);
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Write/i })).toBeInTheDocument();
-    });
-
-    // Tap center Add button
-    const addBtn = screen.getByLabelText(/Add Transaction/i);
-    fireEvent.click(addBtn);
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Save GH₵/i })).toBeInTheDocument();
+      expect(screen.getByText('Net Savings')).toBeInTheDocument();
+      expect(screen.getByText('No chart data yet')).toBeInTheDocument();
     });
   });
 });
