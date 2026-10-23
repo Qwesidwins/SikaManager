@@ -10,3 +10,4 @@ export function triggerHaptic(duration = 15): void {
     // Graceful fallback when permissions or platform block vibration
   }
 }
+

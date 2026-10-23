@@ -43,3 +43,4 @@ describe('DB: Schema and Migrations', () => {
     await v2Db.close();
   });
 });
+

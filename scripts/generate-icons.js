@@ -124,3 +124,4 @@ const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
 fs.writeFileSync(path.join(publicDir, 'favicon.svg'), svgIcon);
 
 console.log('Successfully generated all PWA icons and favicons in public/');
+

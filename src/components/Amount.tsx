@@ -48,3 +48,4 @@ export const Amount: React.FC<AmountProps> = ({
     </span>
   );
 };
+

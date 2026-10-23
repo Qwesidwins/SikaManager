@@ -87,3 +87,4 @@ describe('Component: JournalView', () => {
     expect(entries.some((e) => e.body.includes('Resisted buying an impulse gadget'))).toBe(true);
   });
 });
+

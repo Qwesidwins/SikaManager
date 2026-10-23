@@ -113,3 +113,4 @@ describe('Component: HomeView', () => {
     });
   });
 });
+

@@ -251,3 +251,4 @@ export const LockScreen: React.FC<LockScreenProps> = ({
     </div>
   );
 };
+

@@ -70,3 +70,4 @@ export const IOSInstallGuide: React.FC<IOSInstallGuideProps> = ({ isOpen, onClos
     </div>
   );
 };
+

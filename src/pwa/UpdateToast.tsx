@@ -72,3 +72,4 @@ export const UpdateToast: React.FC = () => {
     </div>
   );
 };
+

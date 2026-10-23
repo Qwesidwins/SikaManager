@@ -72,3 +72,4 @@ describe('Component: BudgetsView', () => {
     expect(allBudgets.length).toBeGreaterThanOrEqual(2);
   });
 });
+

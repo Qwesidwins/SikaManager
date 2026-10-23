@@ -40,3 +40,4 @@ export class SikaDatabase extends Dexie {
     // this.version(2).stores({ ... }).upgrade(tx => { ... });
   }
 }
+

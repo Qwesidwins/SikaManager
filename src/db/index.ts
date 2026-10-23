@@ -8,3 +8,4 @@ export * from './repositories/journalRepo';
 export * from './repositories/budgetsRepo';
 export * from './repositories/goalsRepo';
 export * from './repositories/settingsRepo';
+

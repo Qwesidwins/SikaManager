@@ -71,3 +71,4 @@ export const Keypad: React.FC<KeypadProps> = ({ onKeyPress, onBackspace, onClear
     </div>
   );
 };
+

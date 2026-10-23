@@ -505,3 +505,4 @@ export const HomeView: React.FC<HomeViewProps> = ({
     </div>
   );
 };
+

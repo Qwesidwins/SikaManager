@@ -184,3 +184,4 @@ Clean boundaries are preserved for future opt-in enhancements:
 ---
 
 *Designed and engineered with care, confidence, and respect for personal financial sovereignty.*
+
