@@ -91,13 +91,13 @@ export const InsightsView: React.FC = () => {
         name: 'Income',
         amount: totalIncomeMinor / 100,
         formatted: formatMinor(totalIncomeMinor, 'GHS', 'en-GH'),
-        fill: '#10B981', // Emerald
+        fill: '#2E7D5B', // Income Forest Emerald
       },
       {
         name: 'Expense',
         amount: totalExpenseMinor / 100,
         formatted: formatMinor(totalExpenseMinor, 'GHS', 'en-GH'),
-        fill: '#EF4444', // Warm Red
+        fill: '#C77D2B', // Warm Caution Terracotta
       },
     ];
   }, [totalIncomeMinor, totalExpenseMinor]);
@@ -134,7 +134,7 @@ export const InsightsView: React.FC = () => {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center p-8">
-        <p className="text-xs text-slate-400">Loading insights & analytics...</p>
+        <p className="text-xs text-outline">Loading insights & analytics...</p>
       </div>
     );
   }
@@ -142,14 +142,14 @@ export const InsightsView: React.FC = () => {
   const hasData = transactions.some((t) => !t.deletedAt);
 
   return (
-    <div className="flex-1 flex flex-col w-full px-4 pt-4 pb-28 max-w-4xl mx-auto space-y-6 animate-in fade-in duration-150">
+    <div className="flex-1 flex flex-col w-full px-4 pt-4 pb-28 max-w-4xl mx-auto space-y-5 animate-in fade-in duration-150">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-          <TrendingUp className="w-6 h-6 text-amber-600" />
+        <h1 className="text-xl font-bold text-primary dark:text-white flex items-center gap-2">
+          <TrendingUp className="w-5 h-5 text-secondary" />
           Insights & Analytics
         </h1>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+        <p className="text-xs text-on-surface-variant mt-0.5">
           Visual representation of your cash flow and spending patterns
         </p>
       </div>
@@ -157,107 +157,103 @@ export const InsightsView: React.FC = () => {
       {/* 4 Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Total Inflow */}
-        <div className="bg-white dark:bg-slate-800/80 rounded-2xl p-4 border border-slate-100 dark:border-slate-800 shadow-xs">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-[11px] font-semibold uppercase tracking-wider">Total Inflow</span>
-            <ArrowUpRight className="w-4 h-4 text-emerald-500" />
+        <div className="bg-surface-container-lowest rounded-[20px] p-4 border border-outline-variant/30 shadow-sm">
+          <div className="flex items-center justify-between text-on-surface-variant mb-2">
+            <span className="text-[11px] uppercase tracking-wider font-medium">Total Inflow</span>
+            <div className="w-7 h-7 rounded-lg bg-tertiary-fixed/50 text-emerald-800 flex items-center justify-center">
+              <ArrowDownLeft className="w-3.5 h-3.5" />
+            </div>
           </div>
-          <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400 truncate">
-            +{formatMinor(totalIncomeMinor, 'GHS', 'en-GH')}
+          <p className="text-base sm:text-lg font-bold text-emerald-600 truncate">
+            {formatMinor(totalIncomeMinor, 'GHS')}
           </p>
         </div>
 
         {/* Total Outflow */}
-        <div className="bg-white dark:bg-slate-800/80 rounded-2xl p-4 border border-slate-100 dark:border-slate-800 shadow-xs">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-[11px] font-semibold uppercase tracking-wider">Total Outflow</span>
-            <ArrowDownLeft className="w-4 h-4 text-red-500" />
+        <div className="bg-surface-container-lowest rounded-[20px] p-4 border border-outline-variant/30 shadow-sm">
+          <div className="flex items-center justify-between text-on-surface-variant mb-2">
+            <span className="text-[11px] uppercase tracking-wider font-medium">Total Outflow</span>
+            <div className="w-7 h-7 rounded-lg bg-red-100 dark:bg-red-950/60 text-red-700 flex items-center justify-center">
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </div>
           </div>
-          <p className="text-lg font-bold text-red-600 dark:text-red-400 truncate">
-            -{formatMinor(totalExpenseMinor, 'GHS', 'en-GH')}
+          <p className="text-base sm:text-lg font-bold text-red-600 truncate">
+            {formatMinor(totalExpenseMinor, 'GHS')}
           </p>
         </div>
 
         {/* Net Savings */}
-        <div className="bg-white dark:bg-slate-800/80 rounded-2xl p-4 border border-slate-100 dark:border-slate-800 shadow-xs">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-[11px] font-semibold uppercase tracking-wider">Net Savings</span>
-            <PiggyBank className="w-4 h-4 text-amber-500" />
+        <div className="bg-surface-container-lowest rounded-[20px] p-4 border border-outline-variant/30 shadow-sm">
+          <div className="flex items-center justify-between text-on-surface-variant mb-2">
+            <span className="text-[11px] uppercase tracking-wider font-medium">Net Savings</span>
+            <div className="w-7 h-7 rounded-lg bg-surface-container-low text-secondary flex items-center justify-center">
+              <PiggyBank className="w-3.5 h-3.5" />
+            </div>
           </div>
           <p
-            className={`text-lg font-bold truncate ${
-              netSavingsMinor < 0 ? 'text-red-500' : 'text-slate-900 dark:text-white'
+            className={`text-base sm:text-lg font-bold truncate ${
+              netSavingsMinor >= 0 ? 'text-primary dark:text-white' : 'text-red-500'
             }`}
           >
-            {formatMinor(netSavingsMinor, 'GHS', 'en-GH')}
+            {netSavingsMinor < 0 ? '-' : ''}
+            {formatMinor(Math.abs(netSavingsMinor), 'GHS')}
           </p>
         </div>
 
         {/* Savings Rate */}
-        <div className="bg-white dark:bg-slate-800/80 rounded-2xl p-4 border border-slate-100 dark:border-slate-800 shadow-xs">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-[11px] font-semibold uppercase tracking-wider">Savings Rate</span>
-            <Percent className="w-4 h-4 text-amber-500" />
+        <div className="bg-surface-container-lowest rounded-[20px] p-4 border border-outline-variant/30 shadow-sm">
+          <div className="flex items-center justify-between text-on-surface-variant mb-2">
+            <span className="text-[11px] uppercase tracking-wider font-medium">Savings Rate</span>
+            <div className="w-7 h-7 rounded-lg bg-surface-container-low text-primary flex items-center justify-center">
+              <Percent className="w-3.5 h-3.5" />
+            </div>
           </div>
-          <p className="text-lg font-bold text-slate-900 dark:text-white truncate">
+          <p className="text-base sm:text-lg font-bold text-secondary truncate">
             {savingsRatePercent}%
           </p>
         </div>
       </div>
 
+      {/* Visual Representation Area */}
       {!hasData ? (
-        <div className="py-16 text-center rounded-3xl bg-slate-50 dark:bg-slate-800/30 border border-dashed border-slate-200 dark:border-slate-800">
-          <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-            No chart data yet
-          </p>
-          <p className="text-xs text-slate-400 mt-1">
+        <div className="py-16 text-center rounded-[24px] bg-surface-container-lowest border border-dashed border-outline-variant/40">
+          <p className="text-sm font-semibold text-primary dark:text-white">No chart data yet</p>
+          <p className="text-xs text-on-surface-variant mt-1">
             Log your first income or expense to see the visual analytics.
           </p>
         </div>
       ) : (
-        /* Composition of Chart 1 and Chart 2: Side by Side on Desktop, Top & Bottom on Mobile */
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {/* Chart 1: Income vs Expense Comparison Bar Chart */}
-          <div className="bg-white dark:bg-slate-800/80 rounded-3xl p-5 border border-slate-100 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+          {/* Chart 1: Income vs Expense Comparison */}
+          <div className="bg-surface-container-lowest rounded-[24px] p-5 border border-outline-variant/30 shadow-sm flex flex-col">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-amber-600" />
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                  Income vs. Expense
-                </h3>
+                <div className="w-7 h-7 rounded-lg bg-surface-container-low text-primary flex items-center justify-center">
+                  <BarChart3 className="w-4 h-4" />
+                </div>
+                <h2 className="text-sm font-bold text-primary dark:text-white">
+                  Income vs Expenses
+                </h2>
               </div>
-              <span className="text-xs font-medium text-slate-400">Total Comparison</span>
+              <span className="text-[11px] text-on-surface-variant">Total Comparison</span>
             </div>
 
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={incomeVsExpenseData}
-                  margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
-                >
-                  <XAxis
-                    dataKey="name"
-                    tick={{ fill: '#94A3B8', fontSize: 12, fontWeight: 500 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tick={{ fill: '#94A3B8', fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                    tickFormatter={(v) => `GH₵${v}`}
-                  />
+                <BarChart data={incomeVsExpenseData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                  <XAxis dataKey="name" stroke="#75777e" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#75777e" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(val) => `GH₵${val}`} />
                   <Tooltip
-                    formatter={(val: number) => [`GH₵ ${val.toFixed(2)}`, 'Total']}
+                    formatter={(value: number) => [`GH₵ ${value.toFixed(2)}`, 'Amount']}
                     contentStyle={{
-                      backgroundColor: '#0F172A',
-                      borderColor: '#334155',
-                      borderRadius: 12,
-                      color: '#F8FAFC',
-                      fontSize: 12,
+                      backgroundColor: '#ffffff',
+                      borderRadius: '12px',
+                      border: '1px solid #dce2f3',
+                      fontSize: '12px',
+                      boxShadow: '0 4px 12px rgba(20,33,61,0.08)',
                     }}
                   />
-                  <Bar dataKey="amount" radius={[8, 8, 0, 0]}>
+                  <Bar dataKey="amount" radius={[8, 8, 0, 0]} maxBarSize={48}>
                     {incomeVsExpenseData.map((entry, index) => (
                       <Cell key={`bar-${index}`} fill={entry.fill} />
                     ))}
@@ -265,42 +261,29 @@ export const InsightsView: React.FC = () => {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-
-            <div className="flex items-center justify-around pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-md bg-emerald-500" />
-                <span className="text-slate-600 dark:text-slate-300 font-medium">
-                  Inflow: +{formatMinor(totalIncomeMinor, 'GHS', 'en-GH')}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-md bg-red-500" />
-                <span className="text-slate-600 dark:text-slate-300 font-medium">
-                  Outflow: -{formatMinor(totalExpenseMinor, 'GHS', 'en-GH')}
-                </span>
-              </div>
-            </div>
           </div>
 
-          {/* Chart 2: Category Spending Breakdown Donut Chart */}
-          <div className="bg-white dark:bg-slate-800/80 rounded-3xl p-5 border border-slate-100 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+          {/* Chart 2: Category Spending Breakdown */}
+          <div className="bg-surface-container-lowest rounded-[24px] p-5 border border-outline-variant/30 shadow-sm flex flex-col">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <PieIcon className="w-5 h-5 text-amber-600" />
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                  Spending by Category
-                </h3>
+                <div className="w-7 h-7 rounded-lg bg-surface-container-low text-secondary flex items-center justify-center">
+                  <PieIcon className="w-4 h-4" />
+                </div>
+                <h2 className="text-sm font-bold text-primary dark:text-white">
+                  Spending Breakdown
+                </h2>
               </div>
-              <span className="text-xs font-medium text-slate-400">Expenses Only</span>
+              <span className="text-[11px] text-on-surface-variant">By Category</span>
             </div>
 
             {categoryBreakdownData.length === 0 ? (
-              <div className="h-64 flex items-center justify-center text-xs text-slate-400">
-                No expense categories logged yet
+              <div className="flex-1 flex items-center justify-center py-12 text-outline text-xs">
+                No expense transactions logged yet.
               </div>
             ) : (
-              <>
-                <div className="h-64 w-full">
+              <div className="flex flex-col sm:flex-row items-center gap-4">
+                <div className="h-56 w-56 shrink-0 relative flex items-center justify-center">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -310,50 +293,55 @@ export const InsightsView: React.FC = () => {
                         cx="50%"
                         cy="50%"
                         innerRadius={55}
-                        outerRadius={85}
+                        outerRadius={80}
                         paddingAngle={3}
                       >
                         {categoryBreakdownData.map((entry, index) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={entry.color || PALETTE[index % PALETTE.length]}
-                          />
+                          <Cell key={`pie-cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(val: number) => [`GH₵ ${val.toFixed(2)}`, 'Spent']}
+                        formatter={(value: number) => [`GH₵ ${value.toFixed(2)}`, 'Spent']}
                         contentStyle={{
-                          backgroundColor: '#0F172A',
-                          borderColor: '#334155',
-                          borderRadius: 12,
-                          color: '#F8FAFC',
-                          fontSize: 12,
+                          backgroundColor: '#ffffff',
+                          borderRadius: '12px',
+                          border: '1px solid #dce2f3',
+                          fontSize: '12px',
+                          boxShadow: '0 4px 12px rgba(20,33,61,0.08)',
                         }}
                       />
                     </PieChart>
                   </ResponsiveContainer>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span className="text-[10px] uppercase font-semibold text-on-surface-variant">Total</span>
+                    <span className="text-xs font-bold text-primary dark:text-white">
+                      GH₵ {(totalExpenseMinor / 100).toFixed(0)}
+                    </span>
+                  </div>
                 </div>
 
-                {/* Category Legend List */}
-                <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100 dark:border-slate-800 max-h-32 overflow-y-auto">
-                  {categoryBreakdownData.map((cat, idx) => (
-                    <div key={idx} className="flex items-center justify-between text-xs pr-1">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <span
-                          className="w-2.5 h-2.5 rounded-full shrink-0"
-                          style={{ backgroundColor: cat.color }}
-                        />
-                        <span className="truncate text-slate-600 dark:text-slate-300">
-                          {cat.name}
+                {/* Percentage Legend */}
+                <div className="flex-1 w-full space-y-2 max-h-56 overflow-y-auto pr-1">
+                  {categoryBreakdownData.map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between text-xs py-1">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                        <span className="font-medium text-primary dark:text-white truncate">
+                          {item.name}
                         </span>
                       </div>
-                      <span className="font-semibold text-slate-900 dark:text-white pl-1 shrink-0">
-                        {cat.percent}%
-                      </span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-on-surface-variant tabular-nums font-semibold">
+                          {item.percent}%
+                        </span>
+                        <span className="text-primary dark:text-white font-bold tabular-nums">
+                          GH₵ {item.value.toFixed(2)}
+                        </span>
+                      </div>
                     </div>
                   ))}
                 </div>
-              </>
+              </div>
             )}
           </div>
         </div>

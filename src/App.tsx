@@ -49,10 +49,10 @@ export default function App(): React.ReactElement {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased">
+    <div className="min-h-screen flex flex-col bg-surface text-on-surface font-body-md antialiased selection:bg-secondary-container selection:text-on-secondary-container">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-4 inset-x-4 z-50 max-w-sm mx-auto bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-2.5 px-4 rounded-2xl shadow-xl flex items-center justify-center text-xs font-semibold animate-in slide-in-from-top-4 duration-200">
+        <div className="fixed top-4 inset-x-4 z-50 max-w-sm mx-auto bg-primary text-white py-2.5 px-4 rounded-2xl shadow-xl flex items-center justify-center text-xs font-semibold animate-in slide-in-from-top-4 duration-200 border border-outline-variant/30">
           {toastMessage}
         </div>
       )}
