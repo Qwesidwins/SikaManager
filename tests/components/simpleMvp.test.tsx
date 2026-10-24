@@ -4,6 +4,7 @@ import App from '@/App';
 import { clearAllDatabaseData } from '@/db/database';
 import { seedInitialDataIfNeeded } from '@/db/seed';
 import { accountsRepo } from '@/db/repositories/accountsRepo';
+import { transactionsRepo } from '@/db/repositories/transactionsRepo';
 
 describe('Simple MVP: Core Financial Flow & Visual Analytics', () => {
   beforeEach(async () => {
@@ -128,6 +129,48 @@ describe('Simple MVP: Core Financial Flow & Visual Analytics', () => {
     await waitFor(() => {
       expect(screen.getByText('Shell Fuel station')).toBeInTheDocument();
       expect(screen.getByText('GH₵ 200.00')).toBeInTheDocument();
+    });
+  });
+
+  it('calculates monthly cashflow (e.g. 20K income and 10K expense) and supports monthly breakdown', async () => {
+    // Seed 20,000 Income and 10,000 Expense in October 2026
+    const octDate = '2026-10-15T10:00:00.000Z';
+    await transactionsRepo.create({
+      type: 'income',
+      amountMinor: 2000000, // GH₵ 20,000.00
+      currency: 'GHS',
+      accountId: 'acc-bank',
+      date: octDate,
+      note: 'October Major Consulting Contract',
+    });
+
+    await transactionsRepo.create({
+      type: 'expense',
+      amountMinor: 1000000, // GH₵ 10,000.00
+      currency: 'GHS',
+      accountId: 'acc-bank',
+      date: octDate,
+      note: 'October Office Rent and Operations',
+    });
+
+    render(<App />);
+
+    // Verify Home Dashboard reflects 20k Inflow and 10k Outflow
+    await waitFor(() => {
+      expect(screen.getAllByText('+GH₵ 20,000.00').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText('-GH₵ 10,000.00').length).toBeGreaterThanOrEqual(1);
+    });
+
+    // Navigate to Insights
+    const insightsTab = screen.getByRole('button', { name: /Insights/i });
+    fireEvent.click(insightsTab);
+
+    // Verify Monthly breakdown displays +GH₵ 20,000.00 and -GH₵ 10,000.00
+    await waitFor(() => {
+      expect(screen.getByText('Month-by-Month Cashflow')).toBeInTheDocument();
+      expect(screen.getByText('Monthly Summary')).toBeInTheDocument();
+      expect(screen.getByText(/Income: \+GH₵ 20,000\.00/i)).toBeInTheDocument();
+      expect(screen.getByText(/Expense: -GH₵ 10,000\.00/i)).toBeInTheDocument();
     });
   });
 });

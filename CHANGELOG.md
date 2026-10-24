@@ -2,6 +2,22 @@
 
 All notable changes to the SikaManger codebase are documented here chronologically.
 
+## [Simple MVP Milestone 3: Monthly Breakdown & Cashflow Comparison] - Active Branch (`simple-mvp`)
+
+### Completed
+- **1. Monthly Navigation & Filtering on Dashboard (`/src/features/simpleMvp/HomeView.tsx`)**:
+  - Integrated monthly navigator (`[<]` Month Year `[>]`) and "All Months (Lifetime)" switch.
+  - Dynamically calculates that specific month's Total Inflow, Total Outflow, and Net Savings.
+  - Automatically filters the transaction ledger to show transactions recorded within that selected month.
+- **2. Month-by-Month Cash Flow Comparison Chart (`/src/features/simpleMvp/InsightsView.tsx`)**:
+  - Added multi-month side-by-side bar chart showing **Income** (Forest Emerald) vs **Expense** (Terracotta) per month.
+  - Directly compares monthly figures (e.g. October with 20K Income and 10K Expense).
+- **3. Month Selector Filter on Analytics (`/src/features/simpleMvp/InsightsView.tsx`)**:
+  - Filter all 4 stat cards (Inflow, Outflow, Net, Savings Rate) and the Category Spending Donut Chart to any specific month.
+- **4. Monthly Summary Ledger History (`/src/features/simpleMvp/InsightsView.tsx`)**:
+  - Summary list card breaking down each month's total Income, total Expense, and net surplus/deficit.
+  - One-tap selection to inspect that specific month in detail.
+
 ## [Simple MVP Milestone 2: Liquid Assets, Onboarding & Dynamic Deductions] - Active Branch (`simple-mvp`)
 
 ### Completed

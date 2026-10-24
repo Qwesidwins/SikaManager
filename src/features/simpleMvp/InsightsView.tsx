@@ -10,6 +10,7 @@ import {
   XAxis,
   YAxis,
   Tooltip,
+  Legend,
   Cell,
   PieChart,
   Pie,
@@ -22,6 +23,8 @@ import {
   ArrowDownLeft,
   PiggyBank,
   Percent,
+  Calendar,
+  Layers,
 } from 'lucide-react';
 
 const PALETTE = [
@@ -35,9 +38,26 @@ const PALETTE = [
   '#D65DB1', // Magenta
 ];
 
+function getYearMonthKey(dateStr: string): string {
+  const d = new Date(dateStr);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}`;
+}
+
+function formatMonthLabel(key: string, short = false): string {
+  const [yearStr, monthStr] = key.split('-');
+  const date = new Date(Number(yearStr), Number(monthStr) - 1, 1);
+  return date.toLocaleDateString('en-GH', {
+    month: short ? 'short' : 'long',
+    year: 'numeric',
+  });
+}
+
 export const InsightsView: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedMonth, setSelectedMonth] = useState<string>('all'); // 'all' or 'YYYY-MM'
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -62,13 +82,33 @@ export const InsightsView: React.FC = () => {
     return new Map(categories.map((c) => [c.id, c]));
   }, [categories]);
 
-  // Aggregate metrics
+  // Extract all distinct months available in transactions (sorted newest first)
+  const availableMonths = useMemo(() => {
+    const set = new Set<string>();
+    for (const t of transactions) {
+      if (!t.deletedAt) {
+        set.add(getYearMonthKey(t.date));
+      }
+    }
+    // Also include current month if not yet present
+    set.add(getYearMonthKey(new Date().toISOString()));
+    return Array.from(set).sort().reverse();
+  }, [transactions]);
+
+  // Filter transactions by selected month (if not 'all')
+  const activeTransactions = useMemo(() => {
+    if (selectedMonth === 'all') {
+      return transactions.filter((t) => !t.deletedAt);
+    }
+    return transactions.filter((t) => !t.deletedAt && getYearMonthKey(t.date) === selectedMonth);
+  }, [transactions, selectedMonth]);
+
+  // Aggregate metrics for active scope (selected month or all-time)
   const { totalIncomeMinor, totalExpenseMinor, netSavingsMinor, savingsRatePercent } = useMemo(() => {
     let income = 0;
     let expense = 0;
 
-    for (const t of transactions) {
-      if (t.deletedAt) continue;
+    for (const t of activeTransactions) {
       if (t.type === 'income') income += t.amountMinor;
       if (t.type === 'expense') expense += t.amountMinor;
     }
@@ -82,32 +122,60 @@ export const InsightsView: React.FC = () => {
       netSavingsMinor: net,
       savingsRatePercent: rate,
     };
-  }, [transactions]);
+  }, [activeTransactions]);
 
-  // Chart 1: Income vs Expense Data
-  const incomeVsExpenseData = useMemo(() => {
-    return [
-      {
-        name: 'Income',
-        amount: totalIncomeMinor / 100,
-        formatted: formatMinor(totalIncomeMinor, 'GHS', 'en-GH'),
-        fill: '#2E7D5B', // Income Forest Emerald
-      },
-      {
-        name: 'Expense',
-        amount: totalExpenseMinor / 100,
-        formatted: formatMinor(totalExpenseMinor, 'GHS', 'en-GH'),
-        fill: '#C77D2B', // Warm Caution Terracotta
-      },
-    ];
-  }, [totalIncomeMinor, totalExpenseMinor]);
+  // Monthly Breakdown History & Multi-Month Chart Data
+  const monthlyData = useMemo(() => {
+    const map: Record<string, { incomeMinor: number; expenseMinor: number }> = {};
 
-  // Chart 2: Category Breakdown Data
+    for (const t of transactions) {
+      if (t.deletedAt) continue;
+      const key = getYearMonthKey(t.date);
+      if (!map[key]) {
+        map[key] = { incomeMinor: 0, expenseMinor: 0 };
+      }
+      if (t.type === 'income') {
+        map[key]!.incomeMinor += t.amountMinor;
+      } else if (t.type === 'expense') {
+        map[key]!.expenseMinor += t.amountMinor;
+      }
+    }
+
+    // Ensure all available months are represented
+    for (const m of availableMonths) {
+      if (!map[m]) {
+        map[m] = { incomeMinor: 0, expenseMinor: 0 };
+      }
+    }
+
+    // Sort chronologically for chart (oldest to newest)
+    const sortedKeys = Object.keys(map).sort();
+
+    return sortedKeys.map((key) => {
+      const item = map[key]!;
+      const netMinor = item.incomeMinor - item.expenseMinor;
+      const rate = item.incomeMinor > 0 ? Math.max(0, Math.round((netMinor / item.incomeMinor) * 100)) : 0;
+
+      return {
+        key,
+        label: formatMonthLabel(key, true),
+        fullLabel: formatMonthLabel(key, false),
+        income: item.incomeMinor / 100,
+        expense: item.expenseMinor / 100,
+        incomeMinor: item.incomeMinor,
+        expenseMinor: item.expenseMinor,
+        netMinor,
+        savingsRate: rate,
+      };
+    });
+  }, [transactions, availableMonths]);
+
+  // Category Breakdown Data for the active scope
   const categoryBreakdownData = useMemo(() => {
     const expenseTotals: Record<string, number> = {};
 
-    for (const t of transactions) {
-      if (t.deletedAt || t.type !== 'expense') continue;
+    for (const t of activeTransactions) {
+      if (t.type !== 'expense') continue;
       const catId = t.categoryId || 'uncategorized';
       expenseTotals[catId] = (expenseTotals[catId] || 0) + t.amountMinor;
     }
@@ -127,9 +195,8 @@ export const InsightsView: React.FC = () => {
       };
     });
 
-    // Sort highest spend first
     return items.sort((a, b) => b.value - a.value);
-  }, [transactions, categoryMap, totalExpenseMinor]);
+  }, [activeTransactions, categoryMap, totalExpenseMinor]);
 
   if (loading) {
     return (
@@ -142,19 +209,51 @@ export const InsightsView: React.FC = () => {
   const hasData = transactions.some((t) => !t.deletedAt);
 
   return (
-    <div className="flex-1 flex flex-col w-full px-4 pt-4 pb-28 max-w-4xl mx-auto space-y-5 animate-in fade-in duration-150">
-      {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold text-primary dark:text-white flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-secondary" />
-          Insights & Analytics
-        </h1>
-        <p className="text-xs text-on-surface-variant mt-0.5">
-          Visual representation of your cash flow and spending patterns
-        </p>
+    <div className="flex-1 flex flex-col w-full px-4 pt-4 pb-28 max-w-4xl mx-auto space-y-6 animate-in fade-in duration-150">
+      {/* Top Header & Monthly Filter Controls */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold text-primary dark:text-white flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-secondary" />
+            Insights & Analytics
+          </h1>
+          <p className="text-xs text-on-surface-variant mt-0.5">
+            Monthly cash flow comparisons and category spending breakdown
+          </p>
+        </div>
+
+        {/* Month Selector Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+          <button
+            type="button"
+            onClick={() => setSelectedMonth('all')}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
+              selectedMonth === 'all'
+                ? 'bg-primary text-white shadow-xs'
+                : 'bg-surface-container-low text-on-surface-variant hover:text-on-surface'
+            }`}
+          >
+            All Time
+          </button>
+          {availableMonths.map((mKey) => (
+            <button
+              key={mKey}
+              type="button"
+              onClick={() => setSelectedMonth(mKey)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1 ${
+                selectedMonth === mKey
+                  ? 'bg-primary text-white shadow-xs'
+                  : 'bg-surface-container-low text-on-surface-variant hover:text-on-surface'
+              }`}
+            >
+              <Calendar className="w-3 h-3" />
+              <span>{formatMonthLabel(mKey, true)}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* 4 Stat Cards */}
+      {/* 4 Stat Cards for Selected Month / Scope */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Total Inflow */}
         <div className="bg-surface-container-lowest rounded-[20px] p-4 border border-outline-variant/30 shadow-sm">
@@ -167,6 +266,9 @@ export const InsightsView: React.FC = () => {
           <p className="text-base sm:text-lg font-bold text-emerald-600 truncate">
             {formatMinor(totalIncomeMinor, 'GHS')}
           </p>
+          <span className="text-[10px] text-on-surface-variant">
+            {selectedMonth === 'all' ? 'All time income' : formatMonthLabel(selectedMonth)}
+          </span>
         </div>
 
         {/* Total Outflow */}
@@ -180,6 +282,9 @@ export const InsightsView: React.FC = () => {
           <p className="text-base sm:text-lg font-bold text-red-600 truncate">
             {formatMinor(totalExpenseMinor, 'GHS')}
           </p>
+          <span className="text-[10px] text-on-surface-variant">
+            {selectedMonth === 'all' ? 'All time expense' : formatMonthLabel(selectedMonth)}
+          </span>
         </div>
 
         {/* Net Savings */}
@@ -198,6 +303,9 @@ export const InsightsView: React.FC = () => {
             {netSavingsMinor < 0 ? '-' : ''}
             {formatMinor(Math.abs(netSavingsMinor), 'GHS')}
           </p>
+          <span className="text-[10px] text-on-surface-variant">
+            {netSavingsMinor >= 0 ? 'Surplus retained' : 'Deficit spent'}
+          </span>
         </div>
 
         {/* Savings Rate */}
@@ -211,10 +319,10 @@ export const InsightsView: React.FC = () => {
           <p className="text-base sm:text-lg font-bold text-secondary truncate">
             {savingsRatePercent}%
           </p>
+          <span className="text-[10px] text-on-surface-variant">Of total income</span>
         </div>
       </div>
 
-      {/* Visual Representation Area */}
       {!hasData ? (
         <div className="py-16 text-center rounded-[24px] bg-surface-container-lowest border border-dashed border-outline-variant/40">
           <p className="text-sm font-semibold text-primary dark:text-white">No chart data yet</p>
@@ -223,28 +331,38 @@ export const InsightsView: React.FC = () => {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {/* Chart 1: Income vs Expense Comparison */}
+        <div className="space-y-6">
+          {/* Chart 1: Month-by-Month Cash Flow (Income vs Expense side-by-side) */}
           <div className="bg-surface-container-lowest rounded-[24px] p-5 border border-outline-variant/30 shadow-sm flex flex-col">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-surface-container-low text-primary flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-surface-container-low text-primary flex items-center justify-center">
                   <BarChart3 className="w-4 h-4" />
                 </div>
-                <h2 className="text-sm font-bold text-primary dark:text-white">
-                  Income vs Expenses
-                </h2>
+                <div>
+                  <h2 className="text-sm font-bold text-primary dark:text-white">
+                    Month-by-Month Cashflow
+                  </h2>
+                  <p className="text-[11px] text-on-surface-variant">
+                    Compare Income vs Expenses side-by-side per month
+                  </p>
+                </div>
               </div>
-              <span className="text-[11px] text-on-surface-variant">Total Comparison</span>
+              <span className="text-[11px] font-semibold text-secondary bg-secondary-container/30 px-2.5 py-1 rounded-full">
+                Monthly Trend
+              </span>
             </div>
 
-            <div className="h-64 w-full">
+            <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={incomeVsExpenseData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                  <XAxis dataKey="name" stroke="#75777e" fontSize={12} tickLine={false} axisLine={false} />
+                <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                  <XAxis dataKey="label" stroke="#75777e" fontSize={12} tickLine={false} axisLine={false} />
                   <YAxis stroke="#75777e" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(val) => `GH₵${val}`} />
                   <Tooltip
-                    formatter={(value: number) => [`GH₵ ${value.toFixed(2)}`, 'Amount']}
+                    formatter={(value: number, name: string) => [
+                      `GH₵ ${value.toLocaleString('en-GH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                      name,
+                    ]}
                     contentStyle={{
                       backgroundColor: '#ffffff',
                       borderRadius: '12px',
@@ -253,96 +371,160 @@ export const InsightsView: React.FC = () => {
                       boxShadow: '0 4px 12px rgba(20,33,61,0.08)',
                     }}
                   />
-                  <Bar dataKey="amount" radius={[8, 8, 0, 0]} maxBarSize={48}>
-                    {incomeVsExpenseData.map((entry, index) => (
-                      <Cell key={`bar-${index}`} fill={entry.fill} />
-                    ))}
-                  </Bar>
+                  <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
+                  <Bar dataKey="income" name="Income" fill="#2E7D5B" radius={[6, 6, 0, 0]} maxBarSize={32} />
+                  <Bar dataKey="expense" name="Expense" fill="#C77D2B" radius={[6, 6, 0, 0]} maxBarSize={32} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          {/* Chart 2: Category Spending Breakdown */}
-          <div className="bg-surface-container-lowest rounded-[24px] p-5 border border-outline-variant/30 shadow-sm flex flex-col">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-surface-container-low text-secondary flex items-center justify-center">
-                  <PieIcon className="w-4 h-4" />
-                </div>
-                <h2 className="text-sm font-bold text-primary dark:text-white">
-                  Spending Breakdown
-                </h2>
-              </div>
-              <span className="text-[11px] text-on-surface-variant">By Category</span>
-            </div>
-
-            {categoryBreakdownData.length === 0 ? (
-              <div className="flex-1 flex items-center justify-center py-12 text-outline text-xs">
-                No expense transactions logged yet.
-              </div>
-            ) : (
-              <div className="flex flex-col sm:flex-row items-center gap-4">
-                <div className="h-56 w-56 shrink-0 relative flex items-center justify-center">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={categoryBreakdownData}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={55}
-                        outerRadius={80}
-                        paddingAngle={3}
-                      >
-                        {categoryBreakdownData.map((entry, index) => (
-                          <Cell key={`pie-cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        formatter={(value: number) => [`GH₵ ${value.toFixed(2)}`, 'Spent']}
-                        contentStyle={{
-                          backgroundColor: '#ffffff',
-                          borderRadius: '12px',
-                          border: '1px solid #dce2f3',
-                          fontSize: '12px',
-                          boxShadow: '0 4px 12px rgba(20,33,61,0.08)',
-                        }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <span className="text-[10px] uppercase font-semibold text-on-surface-variant">Total</span>
-                    <span className="text-xs font-bold text-primary dark:text-white">
-                      GH₵ {(totalExpenseMinor / 100).toFixed(0)}
-                    </span>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {/* Chart 2: Category Spending Breakdown */}
+            <div className="bg-surface-container-lowest rounded-[24px] p-5 border border-outline-variant/30 shadow-sm flex flex-col">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-surface-container-low text-secondary flex items-center justify-center">
+                    <PieIcon className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-bold text-primary dark:text-white">
+                      Spending Breakdown
+                    </h2>
+                    <p className="text-[11px] text-on-surface-variant">
+                      {selectedMonth === 'all' ? 'All time categories' : formatMonthLabel(selectedMonth)}
+                    </p>
                   </div>
                 </div>
-
-                {/* Percentage Legend */}
-                <div className="flex-1 w-full space-y-2 max-h-56 overflow-y-auto pr-1">
-                  {categoryBreakdownData.map((item, idx) => (
-                    <div key={idx} className="flex items-center justify-between text-xs py-1">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                        <span className="font-medium text-primary dark:text-white truncate">
-                          {item.name}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-on-surface-variant tabular-nums font-semibold">
-                          {item.percent}%
-                        </span>
-                        <span className="text-primary dark:text-white font-bold tabular-nums">
-                          GH₵ {item.value.toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <span className="text-[11px] text-on-surface-variant">By Category</span>
               </div>
-            )}
+
+              {categoryBreakdownData.length === 0 ? (
+                <div className="flex-1 flex items-center justify-center py-12 text-outline text-xs">
+                  No expense transactions in this period.
+                </div>
+              ) : (
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                  <div className="h-52 w-52 shrink-0 relative flex items-center justify-center">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={categoryBreakdownData}
+                          dataKey="value"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={75}
+                          paddingAngle={3}
+                        >
+                          {categoryBreakdownData.map((entry, index) => (
+                            <Cell key={`pie-cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          formatter={(value: number) => [`GH₵ ${value.toFixed(2)}`, 'Spent']}
+                          contentStyle={{
+                            backgroundColor: '#ffffff',
+                            borderRadius: '12px',
+                            border: '1px solid #dce2f3',
+                            fontSize: '12px',
+                            boxShadow: '0 4px 12px rgba(20,33,61,0.08)',
+                          }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                      <span className="text-[10px] uppercase font-semibold text-on-surface-variant">Spent</span>
+                      <span className="text-xs font-bold text-primary dark:text-white">
+                        GH₵ {(totalExpenseMinor / 100).toFixed(0)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Percentage Legend */}
+                  <div className="flex-1 w-full space-y-2 max-h-52 overflow-y-auto pr-1">
+                    {categoryBreakdownData.map((item, idx) => (
+                      <div key={idx} className="flex items-center justify-between text-xs py-1">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                          <span className="font-medium text-primary dark:text-white truncate">
+                            {item.name}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-on-surface-variant tabular-nums font-semibold">
+                            {item.percent}%
+                          </span>
+                          <span className="text-primary dark:text-white font-bold tabular-nums">
+                            GH₵ {item.value.toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Monthly History Summary List */}
+            <div className="bg-surface-container-lowest rounded-[24px] p-5 border border-outline-variant/30 shadow-sm flex flex-col">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-surface-container-low text-primary flex items-center justify-center">
+                    <Layers className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-bold text-primary dark:text-white">
+                      Monthly Summary
+                    </h2>
+                    <p className="text-[11px] text-on-surface-variant">
+                      Income vs Expenses history
+                    </p>
+                  </div>
+                </div>
+                <span className="text-[11px] text-on-surface-variant font-medium">
+                  {monthlyData.length} {monthlyData.length === 1 ? 'month' : 'months'}
+                </span>
+              </div>
+
+              <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1 divide-y divide-outline-variant/15">
+                {[...monthlyData].reverse().map((m) => (
+                  <div
+                    key={m.key}
+                    onClick={() => setSelectedMonth(m.key)}
+                    className={`pt-2.5 first:pt-0 cursor-pointer p-2 rounded-xl transition-colors ${
+                      selectedMonth === m.key
+                        ? 'bg-surface-container-low/80 ring-1 ring-primary'
+                        : 'hover:bg-surface-container-low/40'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-bold text-primary dark:text-white">
+                        {m.fullLabel}
+                      </span>
+                      <span
+                        className={`text-xs font-bold tabular-nums ${
+                          m.netMinor >= 0 ? 'text-emerald-600' : 'text-red-500'
+                        }`}
+                      >
+                        {m.netMinor >= 0 ? '+' : ''}
+                        {formatMinor(m.netMinor, 'GHS')}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[11px] text-on-surface-variant">
+                      <span className="text-emerald-700 font-medium">
+                        Income: +{formatMinor(m.incomeMinor, 'GHS')}
+                      </span>
+                      <span className="text-red-600 font-medium">
+                        Expense: -{formatMinor(m.expenseMinor, 'GHS')}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}

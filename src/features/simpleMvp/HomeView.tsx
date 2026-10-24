@@ -32,12 +32,28 @@ import {
   X,
   AlertTriangle,
   RotateCcw,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 interface HomeViewProps {
   onOpenAdd: () => void;
   onOpenOnboarding: () => void;
   onShowToast: (message: string) => void;
+}
+
+function getYearMonthKey(dateStr: string): string {
+  const d = new Date(dateStr);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}`;
+}
+
+function formatMonthLabel(key: string): string {
+  const [yearStr, monthStr] = key.split('-');
+  const date = new Date(Number(yearStr), Number(monthStr) - 1, 1);
+  return date.toLocaleDateString('en-GH', { month: 'long', year: 'numeric' });
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({
@@ -49,6 +65,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const [categories, setCategories] = useState<Category[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [filterType, setFilterType] = useState<TransactionType | 'all'>('all');
+  const [selectedMonth, setSelectedMonth] = useState<string>('all'); // 'all' or 'YYYY-MM'
   const [selectedAccountFilter, setSelectedAccountFilter] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -86,7 +103,19 @@ export const HomeView: React.FC<HomeViewProps> = ({
     return new Map(accounts.map((a) => [a.id, a]));
   }, [accounts]);
 
-  // Derived account balances
+  // Distinct available months
+  const availableMonths = useMemo(() => {
+    const set = new Set<string>();
+    for (const t of transactions) {
+      if (!t.deletedAt) {
+        set.add(getYearMonthKey(t.date));
+      }
+    }
+    set.add(getYearMonthKey(new Date().toISOString()));
+    return Array.from(set).sort().reverse();
+  }, [transactions]);
+
+  // Derived account balances (all transactions apply to live account balances)
   const accountBalances = useMemo(() => {
     const map = new Map<string, number>();
     for (const acc of accounts) {
@@ -106,13 +135,20 @@ export const HomeView: React.FC<HomeViewProps> = ({
     return sum;
   }, [accounts, accountBalances]);
 
-  // Inflow & Outflow calculations
+  // Active transactions within selected month (or all-time)
+  const monthTransactions = useMemo(() => {
+    if (selectedMonth === 'all') {
+      return transactions.filter((t) => !t.deletedAt);
+    }
+    return transactions.filter((t) => !t.deletedAt && getYearMonthKey(t.date) === selectedMonth);
+  }, [transactions, selectedMonth]);
+
+  // Inflow & Outflow calculations for selected month scope
   const { totalIncomeMinor, totalExpenseMinor } = useMemo(() => {
     let income = 0;
     let expense = 0;
 
-    for (const t of transactions) {
-      if (t.deletedAt) continue;
+    for (const t of monthTransactions) {
       if (t.type === 'income') {
         income += t.amountMinor;
       } else if (t.type === 'expense') {
@@ -121,12 +157,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
     }
 
     return { totalIncomeMinor: income, totalExpenseMinor: expense };
-  }, [transactions]);
+  }, [monthTransactions]);
 
-  // Filtered transactions
+  // Filtered transactions for the ledger view
   const filteredTransactions = useMemo(() => {
-    return transactions.filter((t) => {
-      if (t.deletedAt) return false;
+    return monthTransactions.filter((t) => {
       if (filterType !== 'all' && t.type !== filterType) return false;
       if (selectedAccountFilter && t.accountId !== selectedAccountFilter) return false;
       if (searchQuery.trim()) {
@@ -138,7 +173,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
       }
       return true;
     });
-  }, [transactions, filterType, selectedAccountFilter, searchQuery, categoryMap, accountMap]);
+  }, [monthTransactions, filterType, selectedAccountFilter, searchQuery, categoryMap, accountMap]);
 
   async function handleDeleteTransaction(id: string) {
     triggerHaptic();
@@ -204,6 +239,27 @@ export const HomeView: React.FC<HomeViewProps> = ({
         return <TrendingUp className="w-4 h-4 text-orange-700" />;
       default:
         return <Wallet className="w-4 h-4 text-slate-600" />;
+    }
+  }
+
+  // Month navigation helpers
+  const currentMonthIdx = selectedMonth === 'all' ? -1 : availableMonths.indexOf(selectedMonth);
+
+  function handlePrevMonth() {
+    triggerHaptic();
+    if (selectedMonth === 'all') {
+      if (availableMonths.length > 0) setSelectedMonth(availableMonths[0]!);
+    } else if (currentMonthIdx < availableMonths.length - 1) {
+      setSelectedMonth(availableMonths[currentMonthIdx + 1]!);
+    }
+  }
+
+  function handleNextMonth() {
+    triggerHaptic();
+    if (currentMonthIdx > 0) {
+      setSelectedMonth(availableMonths[currentMonthIdx - 1]!);
+    } else if (currentMonthIdx === 0) {
+      setSelectedMonth('all');
     }
   }
 
@@ -274,8 +330,45 @@ export const HomeView: React.FC<HomeViewProps> = ({
             </div>
           </div>
 
-          {/* Sub-strip: Inflow and Outflow */}
-          <div className="grid grid-cols-2 gap-3 pt-3 border-t border-outline-variant/20">
+          {/* Month Navigator Header Bar */}
+          <div className="flex items-center justify-between pt-1 pb-1 border-t border-outline-variant/20">
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={handlePrevMonth}
+                aria-label="Previous month"
+                className="w-7 h-7 rounded-lg bg-surface-container-low text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+              <span className="text-xs font-bold text-primary dark:text-white flex items-center gap-1 px-1">
+                <Calendar className="w-3.5 h-3.5 text-secondary" />
+                <span>{selectedMonth === 'all' ? 'All Months (Lifetime)' : formatMonthLabel(selectedMonth)}</span>
+              </span>
+              <button
+                type="button"
+                onClick={handleNextMonth}
+                disabled={selectedMonth === 'all'}
+                aria-label="Next month"
+                className="w-7 h-7 rounded-lg bg-surface-container-low text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors disabled:opacity-40"
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {selectedMonth !== 'all' && (
+              <button
+                type="button"
+                onClick={() => setSelectedMonth('all')}
+                className="text-[11px] font-semibold text-secondary hover:underline"
+              >
+                Show All Time
+              </button>
+            )}
+          </div>
+
+          {/* Sub-strip: Inflow and Outflow for Selected Period */}
+          <div className="grid grid-cols-2 gap-3 pt-1">
             <div className="flex items-center gap-2.5 p-2 rounded-xl bg-surface-container-low/60">
               <div className="w-8 h-8 rounded-xl bg-tertiary-fixed/50 text-emerald-800 flex items-center justify-center shrink-0">
                 <ArrowDownLeft className="w-4 h-4" />
@@ -480,8 +573,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
             <div>
               <p className="text-sm font-semibold text-primary dark:text-white">No transactions found</p>
               <p className="text-xs text-on-surface-variant mt-1 max-w-xs mx-auto">
-                {searchQuery || filterType !== 'all' || selectedAccountFilter
-                  ? 'No entries match your search and account filters.'
+                {searchQuery || filterType !== 'all' || selectedAccountFilter || selectedMonth !== 'all'
+                  ? 'No entries match your search, month, and account filters.'
                   : 'Your ledger is clean. Tap "+ Add" below to log your first income or expense.'}
               </p>
             </div>
