@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { transactionsRepo } from '@/db/repositories/transactionsRepo';
 import { categoriesRepo } from '@/db/repositories/categoriesRepo';
 import { accountsRepo } from '@/db/repositories/accountsRepo';
-import { parseAmountInput } from '@/domain/money';
+import { parseAmountInput, formatMinor } from '@/domain/money';
+import { accountBalance } from '@/domain/balance';
 import { triggerHaptic } from '@/lib/haptics';
-import type { Category, TransactionType, Account } from '@/domain/types';
+import type { Category, TransactionType, Account, Transaction } from '@/domain/types';
 import {
   X,
   Check,
@@ -25,6 +26,8 @@ import {
   Landmark,
   ShieldCheck,
   TrendingUp,
+  ChevronDown,
+  Layers,
 } from 'lucide-react';
 
 interface AddTransactionModalProps {
@@ -41,7 +44,9 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   const [type, setType] = useState<TransactionType>('expense');
   const [amountStr, setAmountStr] = useState('');
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [selectedAccountId, setSelectedAccountId] = useState('');
+  const [showAccountPicker, setShowAccountPicker] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [note, setNote] = useState('');
@@ -56,7 +61,8 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
       setNote('');
       setDate(new Date().toISOString().split('T')[0] ?? '');
       setErrorMsg('');
-      loadAccounts();
+      setShowAccountPicker(false);
+      loadAccountsAndTransactions();
     }
   }, [isOpen]);
 
@@ -66,10 +72,14 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
     }
   }, [isOpen, type]);
 
-  async function loadAccounts() {
+  async function loadAccountsAndTransactions() {
     try {
-      const accs = await accountsRepo.getAll();
+      const [accs, txs] = await Promise.all([
+        accountsRepo.getAll(),
+        transactionsRepo.getAll(),
+      ]);
       setAccounts(accs);
+      setTransactions(txs);
       if (accs.length > 0 && !selectedAccountId) {
         setSelectedAccountId(accs[0]!.id);
       }
@@ -89,6 +99,30 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
       // Fallback
     }
   }
+
+  // Current derived account balances
+  const accountBalances = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const acc of accounts) {
+      map.set(acc.id, accountBalance(acc, transactions));
+    }
+    return map;
+  }, [accounts, transactions]);
+
+  const selectedAccount = useMemo(() => {
+    return accounts.find((a) => a.id === selectedAccountId) || accounts[0];
+  }, [accounts, selectedAccountId]);
+
+  const selectedAccountBalance = useMemo(() => {
+    if (!selectedAccount) return 0;
+    return accountBalances.get(selectedAccount.id) ?? 0;
+  }, [selectedAccount, accountBalances]);
+
+  // Parse amount for previewing projected balance
+  const parsedAmount = useMemo(() => {
+    const res = parseAmountInput(amountStr);
+    return res.ok ? res.minor : 0;
+  }, [amountStr]);
 
   if (!isOpen) return null;
 
@@ -148,23 +182,23 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   function getAccountBadgeIcon(type: string) {
     switch (type) {
       case 'cash':
-        return <Wallet className="w-3.5 h-3.5 text-amber-600" />;
+        return <Wallet className="w-4 h-4 text-amber-600" />;
       case 'mobile_money':
-        return <Smartphone className="w-3.5 h-3.5 text-emerald-600" />;
+        return <Smartphone className="w-4 h-4 text-emerald-600" />;
       case 'bank':
-        return <Landmark className="w-3.5 h-3.5 text-blue-600" />;
+        return <Landmark className="w-4 h-4 text-blue-600" />;
       case 'savings':
-        return <ShieldCheck className="w-3.5 h-3.5 text-violet-600" />;
+        return <ShieldCheck className="w-4 h-4 text-violet-600" />;
       case 'investment':
-        return <TrendingUp className="w-3.5 h-3.5 text-orange-600" />;
+        return <TrendingUp className="w-4 h-4 text-orange-600" />;
       default:
-        return <Building2 className="w-3.5 h-3.5 text-slate-500" />;
+        return <Building2 className="w-4 h-4 text-slate-500" />;
     }
   }
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
-      <div className="bg-surface-container-lowest dark:bg-slate-900 w-full max-w-lg rounded-t-[28px] sm:rounded-[28px] shadow-2xl border border-outline-variant/30 p-6 max-h-[92vh] overflow-y-auto">
+      <div className="bg-surface-container-lowest dark:bg-slate-900 w-full max-w-lg rounded-t-[28px] sm:rounded-[28px] shadow-2xl border border-outline-variant/30 p-6 max-h-[92vh] overflow-y-auto relative">
         {/* Drag handle for mobile */}
         <div className="w-12 h-1.5 bg-outline-variant/60 rounded-full mx-auto -mt-1 mb-4 sm:hidden"></div>
 
@@ -239,37 +273,45 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
             </div>
           </div>
 
-          {/* Account Selector: Deduct from or Deposit to */}
+          {/* Account Selector Card: Tap to open Pop-up Box */}
           <div>
-            <label className="block text-xs font-semibold text-primary dark:text-white mb-1.5">
-              {type === 'expense' ? 'Deduct from Account' : 'Deposit into Account'}
-            </label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {accounts.map((acc) => {
-                const isSelected = (selectedAccountId || accounts[0]?.id) === acc.id;
-                return (
-                  <button
-                    key={acc.id}
-                    type="button"
-                    aria-label={`Select account ${acc.name}`}
-                    onClick={() => {
-                      triggerHaptic();
-                      setSelectedAccountId(acc.id);
-                    }}
-                    className={`p-2.5 rounded-xl border text-left flex items-center gap-2 transition-all text-xs font-semibold ${
-                      isSelected
-                        ? 'border-primary bg-primary text-white shadow-xs'
-                        : 'border-outline-variant/30 bg-surface-container-low text-on-surface hover:bg-surface-container'
-                    }`}
-                  >
-                    <div className="shrink-0">
-                      {getAccountBadgeIcon(acc.type)}
-                    </div>
-                    <span className="truncate">{acc.name}</span>
-                  </button>
-                );
-              })}
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-semibold text-primary dark:text-white">
+                {type === 'expense' ? 'Deduct From' : 'Deposit Into'}
+              </label>
+              <span className="text-[11px] text-secondary font-medium">
+                Tap to change account
+              </span>
             </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic();
+                setShowAccountPicker(true);
+              }}
+              aria-label={`Choose account: currently ${selectedAccount?.name || 'none'}`}
+              className="w-full p-3 rounded-2xl bg-surface-container-low border border-outline-variant/30 flex items-center justify-between hover:bg-surface-container/80 transition-all group active:scale-[0.99]"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-surface-container-lowest flex items-center justify-center shadow-xs shrink-0">
+                  {selectedAccount ? getAccountBadgeIcon(selectedAccount.type) : <Wallet className="w-5 h-5 text-secondary" />}
+                </div>
+                <div className="min-w-0 text-left">
+                  <p className="text-xs font-bold text-primary dark:text-white truncate">
+                    {selectedAccount?.name || 'Select Account'}
+                  </p>
+                  <p className="text-[11px] text-on-surface-variant tabular-nums">
+                    Current Balance: {formatMinor(selectedAccountBalance, 'GHS')}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container-lowest text-xs font-semibold text-secondary group-hover:bg-primary group-hover:text-white transition-colors shrink-0 shadow-2xs">
+                <span>Change</span>
+                <ChevronDown className="w-3.5 h-3.5" />
+              </div>
+            </button>
           </div>
 
           {/* Where or Category Input (Optional) */}
@@ -349,6 +391,124 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
             <span>{type === 'income' ? 'Save Income' : 'Save Expense'}</span>
           </button>
         </form>
+
+        {/* Dedicated Account Pop-up Box / Modal */}
+        {showAccountPicker && (
+          <div className="fixed inset-0 z-60 bg-black/70 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="bg-surface-container-lowest dark:bg-slate-900 max-w-md w-full rounded-t-[32px] sm:rounded-[32px] p-6 shadow-2xl border border-outline-variant/30 flex flex-col max-h-[85vh]">
+              {/* Pop-up Header */}
+              <div className="flex items-center justify-between pb-3 border-b border-outline-variant/20">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-primary text-secondary-container flex items-center justify-center shadow-xs">
+                    <Layers className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-primary dark:text-white leading-tight">
+                      {type === 'expense' ? 'Choose Account to Deduct From' : 'Choose Account to Deposit Into'}
+                    </h3>
+                    <p className="text-[11px] text-on-surface-variant">
+                      Select which wallet or account is affected
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowAccountPicker(false)}
+                  aria-label="Close account picker"
+                  className="w-8 h-8 rounded-full bg-surface-container-low text-on-surface-variant hover:text-on-surface flex items-center justify-center"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Pop-up Account List */}
+              <div className="flex-1 overflow-y-auto space-y-2.5 py-3 pr-1">
+                {accounts.map((acc) => {
+                  const bal = accountBalances.get(acc.id) ?? 0;
+                  const isSelected = (selectedAccountId || accounts[0]?.id) === acc.id;
+                  const newBal = type === 'expense' ? bal - parsedAmount : bal + parsedAmount;
+
+                  return (
+                    <button
+                      key={acc.id}
+                      type="button"
+                      aria-label={`Select account ${acc.name}`}
+                      onClick={() => {
+                        triggerHaptic();
+                        setSelectedAccountId(acc.id);
+                        setShowAccountPicker(false);
+                      }}
+                      className={`w-full p-3.5 rounded-2xl border text-left flex items-center justify-between gap-3 transition-all ${
+                        isSelected
+                          ? 'bg-primary text-white border-primary shadow-sm ring-2 ring-secondary/30'
+                          : 'bg-surface-container-low/70 border-outline-variant/20 hover:bg-surface-container hover:border-outline-variant/40'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                            isSelected ? 'bg-white/20 text-white' : 'bg-surface-container-lowest shadow-xs'
+                          }`}
+                        >
+                          {getAccountBadgeIcon(acc.type)}
+                        </div>
+                        <div className="min-w-0">
+                          <p
+                            className={`text-xs font-bold truncate ${
+                              isSelected ? 'text-white' : 'text-primary dark:text-white'
+                            }`}
+                          >
+                            {acc.name}
+                          </p>
+                          <p
+                            className={`text-[11px] tabular-nums ${
+                              isSelected ? 'text-white/80' : 'text-on-surface-variant'
+                            }`}
+                          >
+                            Current: {formatMinor(bal, 'GHS')}
+                          </p>
+                          {parsedAmount > 0 && (
+                            <p
+                              className={`text-[10px] font-semibold mt-0.5 tabular-nums ${
+                                isSelected ? 'text-secondary-fixed' : 'text-secondary'
+                              }`}
+                            >
+                              After {type === 'expense' ? 'deduction' : 'deposit'}: {formatMinor(newBal, 'GHS')}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="shrink-0 flex items-center">
+                        {isSelected ? (
+                          <div className="w-7 h-7 rounded-full bg-secondary text-primary flex items-center justify-center font-bold">
+                            <Check className="w-4 h-4 stroke-[3]" />
+                          </div>
+                        ) : (
+                          <span className="text-xs text-on-surface-variant font-medium px-2 py-1 rounded-lg bg-surface-container-lowest">
+                            Select
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Pop-up Footer */}
+              <div className="pt-2 border-t border-outline-variant/20">
+                <button
+                  type="button"
+                  onClick={() => setShowAccountPicker(false)}
+                  className="w-full py-2.5 rounded-xl bg-surface-container-low text-xs font-semibold text-on-surface hover:bg-surface-container"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

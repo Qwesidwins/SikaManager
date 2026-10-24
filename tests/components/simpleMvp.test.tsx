@@ -114,7 +114,11 @@ describe('Simple MVP: Core Financial Flow & Visual Analytics', () => {
     const amountInput = screen.getByPlaceholderText('0.00');
     fireEvent.change(amountInput, { target: { value: '50' } });
 
-    // Select "Test MTN MoMo" account
+    // Open Account Pop-up Box
+    const accountTrigger = screen.getByLabelText(/Choose account/i);
+    fireEvent.click(accountTrigger);
+
+    // Select "Test MTN MoMo" account in pop-up
     const momoAccountBtn = await screen.findByLabelText(/Select account Test MTN MoMo/i);
     fireEvent.click(momoAccountBtn);
 
