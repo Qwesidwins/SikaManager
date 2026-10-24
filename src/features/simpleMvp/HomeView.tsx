@@ -1,9 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { transactionsRepo } from '@/db/repositories/transactionsRepo';
 import { categoriesRepo } from '@/db/repositories/categoriesRepo';
+import { accountsRepo } from '@/db/repositories/accountsRepo';
+import { clearAllDatabaseData } from '@/db/database';
+import { seedInitialDataIfNeeded } from '@/db/seed';
 import { formatMinor } from '@/domain/money';
+import { accountBalance } from '@/domain/balance';
 import { triggerHaptic } from '@/lib/haptics';
-import type { Transaction, Category, TransactionType } from '@/domain/types';
+import type { Transaction, Category, TransactionType, Account } from '@/domain/types';
 import {
   Wallet,
   ArrowDownLeft,
@@ -20,19 +24,39 @@ import {
   Briefcase,
   Gift,
   HelpCircle,
+  Landmark,
+  ShieldCheck,
+  TrendingUp,
+  Settings,
+  SlidersHorizontal,
+  X,
+  AlertTriangle,
+  RotateCcw,
 } from 'lucide-react';
 
 interface HomeViewProps {
   onOpenAdd: () => void;
+  onOpenOnboarding: () => void;
   onShowToast: (message: string) => void;
 }
 
-export const HomeView: React.FC<HomeViewProps> = ({ onOpenAdd, onShowToast }) => {
+export const HomeView: React.FC<HomeViewProps> = ({
+  onOpenAdd,
+  onOpenOnboarding,
+  onShowToast,
+}) => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
   const [filterType, setFilterType] = useState<TransactionType | 'all'>('all');
+  const [selectedAccountFilter, setSelectedAccountFilter] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+
+  // Modals
+  const [accountToDelete, setAccountToDelete] = useState<Account | null>(null);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -41,12 +65,14 @@ export const HomeView: React.FC<HomeViewProps> = ({ onOpenAdd, onShowToast }) =>
   async function loadData() {
     setLoading(true);
     try {
-      const [txs, cats] = await Promise.all([
+      const [txs, cats, accs] = await Promise.all([
         transactionsRepo.getAll(),
         categoriesRepo.getAll(),
+        accountsRepo.getAll(),
       ]);
       setTransactions(txs);
       setCategories(cats);
+      setAccounts(accs);
     } finally {
       setLoading(false);
     }
@@ -56,8 +82,32 @@ export const HomeView: React.FC<HomeViewProps> = ({ onOpenAdd, onShowToast }) =>
     return new Map(categories.map((c) => [c.id, c]));
   }, [categories]);
 
-  // Balance & Inflow/Outflow calculations
-  const { totalBalanceMinor, totalIncomeMinor, totalExpenseMinor } = useMemo(() => {
+  const accountMap = useMemo(() => {
+    return new Map(accounts.map((a) => [a.id, a]));
+  }, [accounts]);
+
+  // Derived account balances
+  const accountBalances = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const acc of accounts) {
+      map.set(acc.id, accountBalance(acc, transactions));
+    }
+    return map;
+  }, [accounts, transactions]);
+
+  // Total Liquid Net Worth across all active accounts
+  const totalBalanceMinor = useMemo(() => {
+    let sum = 0;
+    for (const acc of accounts) {
+      if (!acc.archived) {
+        sum += accountBalances.get(acc.id) ?? 0;
+      }
+    }
+    return sum;
+  }, [accounts, accountBalances]);
+
+  // Inflow & Outflow calculations
+  const { totalIncomeMinor, totalExpenseMinor } = useMemo(() => {
     let income = 0;
     let expense = 0;
 
@@ -70,11 +120,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onOpenAdd, onShowToast }) =>
       }
     }
 
-    return {
-      totalBalanceMinor: income - expense,
-      totalIncomeMinor: income,
-      totalExpenseMinor: expense,
-    };
+    return { totalIncomeMinor: income, totalExpenseMinor: expense };
   }, [transactions]);
 
   // Filtered transactions
@@ -82,21 +128,53 @@ export const HomeView: React.FC<HomeViewProps> = ({ onOpenAdd, onShowToast }) =>
     return transactions.filter((t) => {
       if (t.deletedAt) return false;
       if (filterType !== 'all' && t.type !== filterType) return false;
+      if (selectedAccountFilter && t.accountId !== selectedAccountFilter) return false;
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const cat = t.categoryId ? categoryMap.get(t.categoryId)?.name.toLowerCase() : '';
         const note = (t.note || '').toLowerCase();
-        return (cat && cat.includes(q)) || note.includes(q);
+        const accName = accountMap.get(t.accountId)?.name.toLowerCase() || '';
+        return (cat && cat.includes(q)) || note.includes(q) || accName.includes(q);
       }
       return true;
     });
-  }, [transactions, filterType, searchQuery, categoryMap]);
+  }, [transactions, filterType, selectedAccountFilter, searchQuery, categoryMap, accountMap]);
 
-  async function handleDelete(id: string) {
+  async function handleDeleteTransaction(id: string) {
     triggerHaptic();
     await transactionsRepo.softDelete(id);
     onShowToast('Transaction deleted');
     await loadData();
+  }
+
+  async function handleConfirmDeleteAccount() {
+    if (!accountToDelete) return;
+    triggerHaptic();
+    try {
+      await accountsRepo.delete(accountToDelete.id);
+      if (selectedAccountFilter === accountToDelete.id) {
+        setSelectedAccountFilter(null);
+      }
+      onShowToast(`Account "${accountToDelete.name}" deleted`);
+      setAccountToDelete(null);
+      await loadData();
+    } catch {
+      onShowToast('Failed to delete account');
+    }
+  }
+
+  async function handleResetAllData() {
+    triggerHaptic();
+    try {
+      await clearAllDatabaseData();
+      await seedInitialDataIfNeeded();
+      setShowResetConfirm(false);
+      setShowSettingsModal(false);
+      onShowToast('All data reset to initial state');
+      await loadData();
+    } catch {
+      onShowToast('Failed to reset data');
+    }
   }
 
   function getCategoryIcon(name?: string) {
@@ -112,9 +190,26 @@ export const HomeView: React.FC<HomeViewProps> = ({ onOpenAdd, onShowToast }) =>
     return <HelpCircle className="w-4 h-4 text-slate-500" />;
   }
 
+  function getAccountIcon(type: string) {
+    switch (type) {
+      case 'cash':
+        return <Wallet className="w-4 h-4 text-amber-700" />;
+      case 'mobile_money':
+        return <Smartphone className="w-4 h-4 text-emerald-700" />;
+      case 'bank':
+        return <Landmark className="w-4 h-4 text-blue-700" />;
+      case 'savings':
+        return <ShieldCheck className="w-4 h-4 text-violet-700" />;
+      case 'investment':
+        return <TrendingUp className="w-4 h-4 text-orange-700" />;
+      default:
+        return <Wallet className="w-4 h-4 text-slate-600" />;
+    }
+  }
+
   return (
     <div className="flex-1 flex flex-col w-full px-4 pt-4 pb-28 max-w-xl mx-auto space-y-4 animate-in fade-in duration-150">
-      {/* Top Dignified Header */}
+      {/* Top Header */}
       <header className="flex items-center justify-between pt-1">
         <div className="flex items-center gap-2.5">
           <div className="w-10 h-10 rounded-2xl bg-primary text-secondary-container flex items-center justify-center shadow-sm">
@@ -136,23 +231,39 @@ export const HomeView: React.FC<HomeViewProps> = ({ onOpenAdd, onShowToast }) =>
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={onOpenAdd}
-          className="px-3.5 py-2 rounded-xl bg-primary hover:bg-primary-container text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm active:scale-95 transition-all"
-        >
-          <Plus className="w-4 h-4" />
-          <span>New Entry</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowSettingsModal(true)}
+            aria-label="Settings and liquid asset calibration"
+            className="w-9 h-9 rounded-xl bg-surface-container-low text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors"
+          >
+            <Settings className="w-4 h-4" />
+          </button>
+
+          <button
+            type="button"
+            onClick={onOpenAdd}
+            className="px-3.5 py-2 rounded-xl bg-primary hover:bg-primary-container text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm active:scale-95 transition-all"
+          >
+            <Plus className="w-4 h-4" />
+            <span>New Entry</span>
+          </button>
+        </div>
       </header>
 
-      {/* Hero Card: Total Balance & Inflow / Outflow */}
+      {/* Hero Card: Total Liquid Balance & Inflow / Outflow */}
       <div className="relative overflow-hidden rounded-[24px] bg-surface-container-lowest p-6 shadow-[0_4px_24px_-2px_rgba(20,33,61,0.06),0_2px_8px_-1px_rgba(20,33,61,0.03)] border border-outline-variant/30">
         <div className="relative z-10 flex flex-col space-y-4">
           <div>
-            <span className="text-xs uppercase tracking-wider text-on-surface-variant font-medium">
-              Total Balance
-            </span>
+            <div className="flex items-center justify-between">
+              <span className="text-xs uppercase tracking-wider text-on-surface-variant font-medium">
+                Total Balance
+              </span>
+              <span className="text-[11px] text-on-surface-variant font-medium bg-surface-container-low px-2 py-0.5 rounded-full">
+                Liquid Money
+              </span>
+            </div>
             <div className="flex items-baseline gap-1.5 mt-1">
               <span className="text-xl font-semibold text-secondary">
                 GH₵
@@ -192,6 +303,104 @@ export const HomeView: React.FC<HomeViewProps> = ({ onOpenAdd, onShowToast }) =>
         </div>
       </div>
 
+      {/* Liquid Assets Dashboard Section */}
+      <div className="space-y-2.5">
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-bold text-primary dark:text-white">
+              Liquid Assets
+            </h2>
+            <span className="text-[11px] text-on-surface-variant font-medium">
+              ({accounts.length})
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={onOpenOnboarding}
+            className="text-xs font-semibold text-secondary hover:underline flex items-center gap-1"
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            <span>Calibrate Starting Money</span>
+          </button>
+        </div>
+
+        {/* Horizontal Scroll of Liquid Asset Cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+          {accounts.map((acc) => {
+            const bal = accountBalances.get(acc.id) ?? 0;
+            const isFilterActive = selectedAccountFilter === acc.id;
+
+            return (
+              <div
+                key={acc.id}
+                onClick={() => {
+                  triggerHaptic();
+                  setSelectedAccountFilter(isFilterActive ? null : acc.id);
+                }}
+                className={`p-3 rounded-2xl border transition-all cursor-pointer relative group ${
+                  isFilterActive
+                    ? 'bg-primary text-white border-primary shadow-sm'
+                    : 'bg-surface-container-lowest border-outline-variant/30 hover:border-outline-variant/60 shadow-xs'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1.5">
+                  <div
+                    className={`w-7 h-7 rounded-lg flex items-center justify-center ${
+                      isFilterActive ? 'bg-white/20 text-white' : 'bg-surface-container-low'
+                    }`}
+                  >
+                    {getAccountIcon(acc.type)}
+                  </div>
+
+                  {/* Delete Account Button */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setAccountToDelete(acc);
+                    }}
+                    aria-label={`Delete account ${acc.name}`}
+                    className={`w-6 h-6 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ${
+                      isFilterActive
+                        ? 'text-white/70 hover:text-white hover:bg-white/20'
+                        : 'text-outline hover:text-red-500 hover:bg-red-50'
+                    }`}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                <p
+                  className={`text-xs font-bold truncate ${
+                    isFilterActive ? 'text-white' : 'text-primary dark:text-white'
+                  }`}
+                >
+                  {acc.name}
+                </p>
+
+                <p
+                  className={`text-sm font-extrabold tabular-nums mt-0.5 ${
+                    isFilterActive
+                      ? 'text-secondary-fixed'
+                      : bal >= 0
+                      ? 'text-primary dark:text-white'
+                      : 'text-red-500'
+                  }`}
+                >
+                  {formatMinor(bal, 'GHS')}
+                </p>
+
+                {isFilterActive && (
+                  <span className="block text-[10px] text-white/80 mt-1 font-medium">
+                    Filter Active (tap to clear)
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Filter and Search Controls */}
       <div className="space-y-2 pt-1">
         <div className="flex items-center justify-between gap-2">
@@ -216,6 +425,18 @@ export const HomeView: React.FC<HomeViewProps> = ({ onOpenAdd, onShowToast }) =>
             ))}
           </div>
 
+          {/* Account Filter Active Pill */}
+          {selectedAccountFilter && (
+            <button
+              type="button"
+              onClick={() => setSelectedAccountFilter(null)}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary-container/40 text-secondary text-[11px] font-semibold"
+            >
+              <span>{accountMap.get(selectedAccountFilter)?.name}</span>
+              <X className="w-3 h-3" />
+            </button>
+          )}
+
           {/* Transaction Count Indicator */}
           <span className="text-xs font-medium text-on-surface-variant px-1">
             {filteredTransactions.length} {filteredTransactions.length === 1 ? 'entry' : 'entries'}
@@ -229,7 +450,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onOpenAdd, onShowToast }) =>
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search notes or categories..."
+            placeholder="Search notes, places, or categories..."
             className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-surface-container-low text-on-surface text-xs placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-secondary/40 transition-all border border-transparent focus:border-outline-variant/30"
           />
           {searchQuery && (
@@ -259,12 +480,12 @@ export const HomeView: React.FC<HomeViewProps> = ({ onOpenAdd, onShowToast }) =>
             <div>
               <p className="text-sm font-semibold text-primary dark:text-white">No transactions found</p>
               <p className="text-xs text-on-surface-variant mt-1 max-w-xs mx-auto">
-                {searchQuery || filterType !== 'all'
-                  ? 'No entries match your search filters.'
+                {searchQuery || filterType !== 'all' || selectedAccountFilter
+                  ? 'No entries match your search and account filters.'
                   : 'Your ledger is clean. Tap "+ Add" below to log your first income or expense.'}
               </p>
             </div>
-            {!searchQuery && filterType === 'all' && (
+            {!searchQuery && filterType === 'all' && !selectedAccountFilter && (
               <button
                 type="button"
                 onClick={onOpenAdd}
@@ -279,6 +500,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onOpenAdd, onShowToast }) =>
           <div className="rounded-[20px] bg-surface-container-lowest border border-outline-variant/20 shadow-sm overflow-hidden divide-y divide-outline-variant/15">
             {filteredTransactions.map((tx) => {
               const category = tx.categoryId ? categoryMap.get(tx.categoryId) : undefined;
+              const account = accountMap.get(tx.accountId);
               const formattedDate = new Date(tx.date).toLocaleDateString('en-GH', {
                 month: 'short',
                 day: 'numeric',
@@ -298,7 +520,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onOpenAdd, onShowToast }) =>
                         {tx.note || category?.name || (tx.type === 'income' ? 'Income' : 'Expense')}
                       </p>
                       <p className="text-xs text-on-surface-variant truncate">
-                        {category?.name || 'General'} · {formattedDate}
+                        {account?.name || 'Cash'} · {category?.name || 'General'} · {formattedDate}
                       </p>
                     </div>
                   </div>
@@ -316,7 +538,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onOpenAdd, onShowToast }) =>
                     </span>
                     <button
                       type="button"
-                      onClick={() => handleDelete(tx.id)}
+                      onClick={() => handleDeleteTransaction(tx.id)}
                       aria-label="Delete entry"
                       className="w-8 h-8 rounded-lg text-outline hover:text-red-500 hover:bg-red-50 flex items-center justify-center transition-colors opacity-70 group-hover:opacity-100"
                     >
@@ -329,6 +551,135 @@ export const HomeView: React.FC<HomeViewProps> = ({ onOpenAdd, onShowToast }) =>
           </div>
         )}
       </div>
+
+      {/* Delete Account Confirmation Modal */}
+      {accountToDelete && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-surface-container-lowest max-w-sm w-full rounded-3xl p-6 shadow-2xl border border-outline-variant/30 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+            <div className="text-center space-y-1">
+              <h3 className="text-base font-bold text-primary dark:text-white">
+                Delete {accountToDelete.name}?
+              </h3>
+              <p className="text-xs text-on-surface-variant">
+                This will delete the account from your liquid assets. Existing transactions recorded to this account will remain in your activity log.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setAccountToDelete(null)}
+                className="py-2.5 px-4 rounded-xl bg-surface-container-low text-xs font-semibold text-on-surface hover:bg-surface-container transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDeleteAccount}
+                className="py-2.5 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-colors"
+              >
+                Delete Account
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Settings / Manage Modal */}
+      {showSettingsModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-surface-container-lowest max-w-sm w-full rounded-3xl p-6 shadow-2xl border border-outline-variant/30 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-outline-variant/20">
+              <h3 className="text-base font-bold text-primary dark:text-white">
+                SikaManger Settings
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowSettingsModal(false)}
+                className="w-8 h-8 rounded-full bg-surface-container-low text-on-surface-variant hover:text-on-surface flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSettingsModal(false);
+                  onOpenOnboarding();
+                }}
+                className="w-full p-3 rounded-2xl bg-surface-container-low text-left flex items-center gap-3 hover:bg-surface-container transition-colors"
+              >
+                <div className="w-8 h-8 rounded-xl bg-surface-container-lowest text-secondary flex items-center justify-center shadow-xs">
+                  <SlidersHorizontal className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-primary dark:text-white">
+                    Calibrate Starting Liquid Money
+                  </p>
+                  <p className="text-[10px] text-on-surface-variant">
+                    Update Cash, Bank, MoMo and Savings balances
+                  </p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowResetConfirm(true)}
+                className="w-full p-3 rounded-2xl bg-red-50 text-left flex items-center gap-3 hover:bg-red-100/70 transition-colors text-red-700"
+              >
+                <div className="w-8 h-8 rounded-xl bg-white text-red-600 flex items-center justify-center shadow-xs">
+                  <RotateCcw className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold">Clear All Data</p>
+                  <p className="text-[10px] text-red-500">
+                    Reset ledger and restart onboarding fresh
+                  </p>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reset Confirmation Dialog */}
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-surface-container-lowest max-w-sm w-full rounded-3xl p-6 shadow-2xl border border-red-200 space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+            <div className="text-center space-y-1">
+              <h3 className="text-base font-bold text-primary dark:text-white">
+                Delete All Information?
+              </h3>
+              <p className="text-xs text-on-surface-variant">
+                This will erase all accounts and transactions from IndexedDB. This action cannot be undone.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowResetConfirm(false)}
+                className="py-2.5 px-4 rounded-xl bg-surface-container-low text-xs font-semibold text-on-surface"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleResetAllData}
+                className="py-2.5 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold"
+              >
+                Yes, Reset All
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

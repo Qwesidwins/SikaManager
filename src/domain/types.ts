@@ -1,4 +1,4 @@
-export type AccountType = 'cash' | 'bank' | 'mobile_money' | 'savings';
+export type AccountType = 'cash' | 'bank' | 'mobile_money' | 'savings' | 'investment' | 'other';
 export type TransactionType = 'income' | 'expense' | 'transfer';
 export type CategoryKind = 'expense' | 'income';
 export type JournalRating = 'worth_it' | 'neutral' | 'regret' | null;

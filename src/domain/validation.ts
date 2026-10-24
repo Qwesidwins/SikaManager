@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const AccountTypeSchema = z.enum(['cash', 'bank', 'mobile_money', 'savings']);
+export const AccountTypeSchema = z.enum(['cash', 'bank', 'mobile_money', 'savings', 'investment', 'other']);
 export const TransactionTypeSchema = z.enum(['income', 'expense', 'transfer']);
 export const CategoryKindSchema = z.enum(['expense', 'income']);
 export const JournalRatingSchema = z.enum(['worth_it', 'neutral', 'regret']).nullable();

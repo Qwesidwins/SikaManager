@@ -44,5 +44,9 @@ export const accountsRepo = {
       updatedAt: new Date().toISOString(),
     });
   },
+
+  async delete(id: string): Promise<void> {
+    await db.accounts.delete(id);
+  },
 };
 

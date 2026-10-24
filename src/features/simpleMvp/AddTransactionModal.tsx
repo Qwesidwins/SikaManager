@@ -4,7 +4,7 @@ import { categoriesRepo } from '@/db/repositories/categoriesRepo';
 import { accountsRepo } from '@/db/repositories/accountsRepo';
 import { parseAmountInput } from '@/domain/money';
 import { triggerHaptic } from '@/lib/haptics';
-import type { Category, TransactionType } from '@/domain/types';
+import type { Category, TransactionType, Account } from '@/domain/types';
 import {
   X,
   Check,
@@ -20,7 +20,11 @@ import {
   Gift,
   HelpCircle,
   Calendar,
-  FileText,
+  Building2,
+  Wallet,
+  Landmark,
+  ShieldCheck,
+  TrendingUp,
 } from 'lucide-react';
 
 interface AddTransactionModalProps {
@@ -36,6 +40,8 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
 }) => {
   const [type, setType] = useState<TransactionType>('expense');
   const [amountStr, setAmountStr] = useState('');
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [selectedAccountId, setSelectedAccountId] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [note, setNote] = useState('');
@@ -50,6 +56,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
       setNote('');
       setDate(new Date().toISOString().split('T')[0] ?? '');
       setErrorMsg('');
+      loadAccounts();
     }
   }, [isOpen]);
 
@@ -58,6 +65,18 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
       loadCategories();
     }
   }, [isOpen, type]);
+
+  async function loadAccounts() {
+    try {
+      const accs = await accountsRepo.getAll();
+      setAccounts(accs);
+      if (accs.length > 0 && !selectedAccountId) {
+        setSelectedAccountId(accs[0]!.id);
+      }
+    } catch {
+      // Fallback
+    }
+  }
 
   async function loadCategories() {
     try {
@@ -91,10 +110,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
       setIsSubmitting(true);
       triggerHaptic();
 
-      // Ensure we have a default account
-      const accounts = await accountsRepo.getAll();
-      const accountId = accounts[0]?.id ?? 'acc-cash';
-
+      const accountId = selectedAccountId || accounts[0]?.id || 'acc-cash';
       const isoDate = new Date(`${date}T12:00:00.000Z`).toISOString();
 
       await transactionsRepo.create({
@@ -129,9 +145,26 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
     return <HelpCircle className="w-3.5 h-3.5" />;
   }
 
+  function getAccountBadgeIcon(type: string) {
+    switch (type) {
+      case 'cash':
+        return <Wallet className="w-3.5 h-3.5 text-amber-600" />;
+      case 'mobile_money':
+        return <Smartphone className="w-3.5 h-3.5 text-emerald-600" />;
+      case 'bank':
+        return <Landmark className="w-3.5 h-3.5 text-blue-600" />;
+      case 'savings':
+        return <ShieldCheck className="w-3.5 h-3.5 text-violet-600" />;
+      case 'investment':
+        return <TrendingUp className="w-3.5 h-3.5 text-orange-600" />;
+      default:
+        return <Building2 className="w-3.5 h-3.5 text-slate-500" />;
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
-      <div className="bg-surface-container-lowest dark:bg-slate-900 w-full max-w-lg rounded-t-[28px] sm:rounded-[28px] shadow-2xl border border-outline-variant/30 p-6 max-h-[90vh] overflow-y-auto">
+      <div className="bg-surface-container-lowest dark:bg-slate-900 w-full max-w-lg rounded-t-[28px] sm:rounded-[28px] shadow-2xl border border-outline-variant/30 p-6 max-h-[92vh] overflow-y-auto">
         {/* Drag handle for mobile */}
         <div className="w-12 h-1.5 bg-outline-variant/60 rounded-full mx-auto -mt-1 mb-4 sm:hidden"></div>
 
@@ -206,10 +239,57 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
             </div>
           </div>
 
+          {/* Account Selector: Deduct from or Deposit to */}
+          <div>
+            <label className="block text-xs font-semibold text-primary dark:text-white mb-1.5">
+              {type === 'expense' ? 'Deduct from Account' : 'Deposit into Account'}
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {accounts.map((acc) => {
+                const isSelected = (selectedAccountId || accounts[0]?.id) === acc.id;
+                return (
+                  <button
+                    key={acc.id}
+                    type="button"
+                    aria-label={`Select account ${acc.name}`}
+                    onClick={() => {
+                      triggerHaptic();
+                      setSelectedAccountId(acc.id);
+                    }}
+                    className={`p-2.5 rounded-xl border text-left flex items-center gap-2 transition-all text-xs font-semibold ${
+                      isSelected
+                        ? 'border-primary bg-primary text-white shadow-xs'
+                        : 'border-outline-variant/30 bg-surface-container-low text-on-surface hover:bg-surface-container'
+                    }`}
+                  >
+                    <div className="shrink-0">
+                      {getAccountBadgeIcon(acc.type)}
+                    </div>
+                    <span className="truncate">{acc.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Where or Category Input (Optional) */}
+          <div>
+            <label className="block text-xs font-semibold text-primary dark:text-white mb-1.5">
+              Where or Custom Category (Optional)
+            </label>
+            <input
+              type="text"
+              placeholder="Lunch, Uber, Project fee, Auntie Muni, Shell station..."
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low text-xs font-medium text-on-surface border border-outline-variant/20 placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-secondary/40"
+            />
+          </div>
+
           {/* Category Chips Scroll Carousel */}
           <div>
-            <label className="block text-xs font-semibold text-primary dark:text-white mb-2">
-              Select Category
+            <label className="block text-[11px] font-semibold text-on-surface-variant mb-1.5">
+              Quick Category Chips
             </label>
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
               {categories.map((cat) => {
@@ -222,7 +302,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                       triggerHaptic();
                       setSelectedCategoryId(cat.id);
                     }}
-                    className={`shrink-0 h-[36px] px-3.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 ${
+                    className={`shrink-0 h-[34px] px-3 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 ${
                       isSelected
                         ? 'bg-primary text-white shadow-sm'
                         : 'bg-surface-container-low text-on-surface hover:bg-surface-container'
@@ -236,37 +316,19 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
             </div>
           </div>
 
-          {/* Date & Note Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-primary dark:text-white mb-1.5">
-                Date
-              </label>
-              <div className="relative">
-                <Calendar className="w-4 h-4 text-outline absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-surface-container-low text-xs font-medium text-on-surface border border-outline-variant/20 focus:outline-none focus:ring-2 focus:ring-secondary/40"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-primary dark:text-white mb-1.5">
-                Note / Description (Optional)
-              </label>
-              <div className="relative">
-                <FileText className="w-4 h-4 text-outline absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="text"
-                  placeholder="Lunch, Uber, Project fee..."
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-surface-container-low text-xs font-medium text-on-surface border border-outline-variant/20 placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-secondary/40"
-                />
-              </div>
+          {/* Date Picker */}
+          <div>
+            <label className="block text-xs font-semibold text-primary dark:text-white mb-1.5">
+              Date
+            </label>
+            <div className="relative">
+              <Calendar className="w-4 h-4 text-outline absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-surface-container-low text-xs font-medium text-on-surface border border-outline-variant/20 focus:outline-none focus:ring-2 focus:ring-secondary/40"
+              />
             </div>
           </div>
 

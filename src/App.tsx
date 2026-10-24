@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { seedInitialDataIfNeeded } from '@/db/seed';
+import { settingsRepo } from '@/db/repositories/settingsRepo';
 import { HomeView } from '@/features/simpleMvp/HomeView';
 import { InsightsView } from '@/features/simpleMvp/InsightsView';
 import { AddTransactionModal } from '@/features/simpleMvp/AddTransactionModal';
+import { LiquidOnboardingModal } from '@/features/simpleMvp/LiquidOnboardingModal';
 import { BottomNav, type MvpTab } from '@/features/simpleMvp/BottomNav';
 
 export default function App(): React.ReactElement {
   const [currentTab, setCurrentTab] = useState<MvpTab>('home');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [dataVersion, setDataVersion] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -16,6 +19,10 @@ export default function App(): React.ReactElement {
     async function init() {
       try {
         await seedInitialDataIfNeeded();
+        const done = await settingsRepo.get('onboardingDone');
+        if (!done) {
+          setIsOnboardingOpen(true);
+        }
       } catch {
         // Fallback
       } finally {
@@ -40,10 +47,19 @@ export default function App(): React.ReactElement {
     [showToast]
   );
 
+  const handleOnboardingCompleted = useCallback(
+    (msg: string) => {
+      setIsOnboardingOpen(false);
+      setDataVersion((v) => v + 1);
+      showToast(msg);
+    },
+    [showToast]
+  );
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
-        <div className="w-8 h-8 rounded-full border-2 border-amber-600 border-t-transparent animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-surface">
+        <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
       </div>
     );
   }
@@ -63,6 +79,7 @@ export default function App(): React.ReactElement {
           <HomeView
             key={`home-${dataVersion}`}
             onOpenAdd={() => setIsAddModalOpen(true)}
+            onOpenOnboarding={() => setIsOnboardingOpen(true)}
             onShowToast={showToast}
           />
         )}
@@ -70,6 +87,13 @@ export default function App(): React.ReactElement {
           <InsightsView key={`insights-${dataVersion}`} />
         )}
       </main>
+
+      {/* Liquid Assets Onboarding & Calibration Modal */}
+      <LiquidOnboardingModal
+        isOpen={isOnboardingOpen}
+        onClose={() => setIsOnboardingOpen(false)}
+        onCompleted={handleOnboardingCompleted}
+      />
 
       {/* Add Transaction Modal */}
       <AddTransactionModal

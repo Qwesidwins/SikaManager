@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import App from '@/App';
 import { clearAllDatabaseData } from '@/db/database';
 import { seedInitialDataIfNeeded } from '@/db/seed';
+import { accountsRepo } from '@/db/repositories/accountsRepo';
 
 describe('Simple MVP: Core Financial Flow & Visual Analytics', () => {
   beforeEach(async () => {
@@ -82,6 +83,51 @@ describe('Simple MVP: Core Financial Flow & Visual Analytics', () => {
       expect(screen.getByText('Total Inflow')).toBeInTheDocument();
       expect(screen.getByText('Total Outflow')).toBeInTheDocument();
       expect(screen.getByText('Net Savings')).toBeInTheDocument();
+    });
+  });
+
+  it('supports calibrating liquid assets, account-specific deduction, and account deletion', async () => {
+    // Pre-create an account with starting balance
+    await accountsRepo.create({
+      id: 'acc-test-momo',
+      name: 'Test MTN MoMo',
+      type: 'mobile_money',
+      currency: 'GHS',
+      openingBalanceMinor: 25000, // GH₵ 250.00
+      archived: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Test MTN MoMo')).toBeInTheDocument();
+      expect(screen.getByText('GH₵ 250.00')).toBeInTheDocument();
+    });
+
+    // Deduct GH₵ 50.00 from Test MTN MoMo
+    const addBtn = screen.getByLabelText(/Add transaction/i);
+    fireEvent.click(addBtn);
+
+    const amountInput = screen.getByPlaceholderText('0.00');
+    fireEvent.change(amountInput, { target: { value: '50' } });
+
+    // Select "Test MTN MoMo" account
+    const momoAccountBtn = await screen.findByLabelText(/Select account Test MTN MoMo/i);
+    fireEvent.click(momoAccountBtn);
+
+    // Add optional custom place/category
+    const noteInput = screen.getByPlaceholderText(/Lunch, Uber, Project fee/i);
+    fireEvent.change(noteInput, { target: { value: 'Shell Fuel station' } });
+
+    const saveExpenseBtn = screen.getByRole('button', { name: /Save Expense/i });
+    fireEvent.click(saveExpenseBtn);
+
+    // Verify balance reduced: 250 - 50 = 200
+    await waitFor(() => {
+      expect(screen.getByText('Shell Fuel station')).toBeInTheDocument();
+      expect(screen.getByText('GH₵ 200.00')).toBeInTheDocument();
     });
   });
 });

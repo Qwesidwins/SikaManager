@@ -70,3 +70,4 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     </nav>
   );
 };
+

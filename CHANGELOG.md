@@ -2,6 +2,31 @@
 
 All notable changes to the SikaManger codebase are documented here chronologically.
 
+## [Simple MVP Milestone 2: Liquid Assets, Onboarding & Dynamic Deductions] - Active Branch (`simple-mvp`)
+
+### Completed
+- **1. Liquid Assets Onboarding & Calibration Wizard (`/src/features/simpleMvp/LiquidOnboardingModal.tsx`)**:
+  - Greet the user on initial launch to calibrate all liquid money at hand.
+  - Interactive input fields for Cash in Hand, Mobile Money (MoMo), Bank Accounts, Emergency & Savings, and Stocks & Investments.
+  - "+ Add another asset" allowing custom accounts (e.g., Telecel Cash, CalBank, T-Bills, Crypto) with custom names and types.
+  - Real-time Total Starting Liquid Money banner summing assets live in `GH₵`.
+  - Accessible anytime from Home to re-calibrate starting balances.
+- **2. Dedicated Liquid Assets Dashboard (`/src/features/simpleMvp/HomeView.tsx`)**:
+  - Dashboard section displaying each liquid account with its live derived balance (`accountBalance(acc, transactions)`).
+  - Tapping an account filters the transaction ledger below to show activity exclusively for that account.
+  - Quick "+ Add Asset" and "Calibrate Starting Money" quick actions.
+- **3. Account-Specific Deductions and Deposits (`/src/features/simpleMvp/AddTransactionModal.tsx`)**:
+  - Added "Deduct from Account" (for expenses) and "Deposit into Account" (for incomes) selectors.
+  - Selecting an account tags the transaction with `accountId`.
+  - Expense transactions deduct directly from the selected account; income transactions credit that exact account.
+- **4. Optional Custom Category & Place Input (`/src/features/simpleMvp/AddTransactionModal.tsx`)**:
+  - Free-form text input allowing the user to type where the money went or a custom category (e.g. "Waakye at Auntie Muni", "Shell station", "Shoprite", "Client payout").
+  - Quick-category suggestion chips underneath for one-tap selection.
+- **5. Account & Data Deletion (`/src/db/repositories/accountsRepo.ts`, `/src/features/simpleMvp/HomeView.tsx`)**:
+  - Added `accountsRepo.delete(id)`.
+  - Trash button on each asset card with confirmation dialog to safely delete accounts.
+  - Settings modal with "Clear All Data" dialog to wipe IndexedDB and restart fresh.
+
 ## [Simple MVP Milestone] - Active Branch (`simple-mvp`)
 
 ### Completed
