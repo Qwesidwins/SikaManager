@@ -8,7 +8,6 @@ import { triggerHaptic } from '@/lib/haptics';
 import type { Category, TransactionType, Account, Transaction } from '@/domain/types';
 import {
   X,
-  Check,
   ArrowDownLeft,
   ArrowUpRight,
   Utensils,
@@ -26,8 +25,8 @@ import {
   Landmark,
   ShieldCheck,
   TrendingUp,
-  ChevronDown,
-  Layers,
+  ArrowLeft,
+  ArrowRight,
 } from 'lucide-react';
 
 interface AddTransactionModalProps {
@@ -41,12 +40,11 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const [step, setStep] = useState<'input' | 'choose_account'>('input');
   const [type, setType] = useState<TransactionType>('expense');
   const [amountStr, setAmountStr] = useState('');
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [selectedAccountId, setSelectedAccountId] = useState('');
-  const [showAccountPicker, setShowAccountPicker] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [note, setNote] = useState('');
@@ -56,12 +54,12 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
+      setStep('input');
       setType('expense');
       setAmountStr('');
       setNote('');
       setDate(new Date().toISOString().split('T')[0] ?? '');
       setErrorMsg('');
-      setShowAccountPicker(false);
       loadAccountsAndTransactions();
     }
   }, [isOpen]);
@@ -80,9 +78,6 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
       ]);
       setAccounts(accs);
       setTransactions(txs);
-      if (accs.length > 0 && !selectedAccountId) {
-        setSelectedAccountId(accs[0]!.id);
-      }
     } catch {
       // Fallback
     }
@@ -109,15 +104,6 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
     return map;
   }, [accounts, transactions]);
 
-  const selectedAccount = useMemo(() => {
-    return accounts.find((a) => a.id === selectedAccountId) || accounts[0];
-  }, [accounts, selectedAccountId]);
-
-  const selectedAccountBalance = useMemo(() => {
-    if (!selectedAccount) return 0;
-    return accountBalances.get(selectedAccount.id) ?? 0;
-  }, [selectedAccount, accountBalances]);
-
   // Parse amount for previewing projected balance
   const parsedAmount = useMemo(() => {
     const res = parseAmountInput(amountStr);
@@ -126,7 +112,8 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
 
   if (!isOpen) return null;
 
-  async function handleSubmit(e: React.FormEvent) {
+  // Step 1: Validate amount and trigger pop-up transition
+  function handleProceedToAccountChoice(e: React.FormEvent) {
     e.preventDefault();
     setErrorMsg('');
 
@@ -140,12 +127,21 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
       return;
     }
 
+    triggerHaptic();
+    setStep('choose_account');
+  }
+
+  // Step 2: Strictly choose the asset to deduct from or deposit to, and save
+  async function handleConfirmSaveWithAccount(accountId: string) {
+    const parsed = parseAmountInput(amountStr);
+    if (!parsed.ok || parsed.minor <= 0) return;
+
     try {
       setIsSubmitting(true);
       triggerHaptic();
 
-      const accountId = selectedAccountId || accounts[0]?.id || 'acc-cash';
       const isoDate = new Date(`${date}T12:00:00.000Z`).toISOString();
+      const targetAccount = accounts.find((a) => a.id === accountId);
 
       await transactionsRepo.create({
         type,
@@ -157,7 +153,12 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
         note: note.trim() || undefined,
       });
 
-      onSuccess(type === 'income' ? 'Income added successfully' : 'Expense recorded');
+      const actionText = type === 'expense' ? 'Deducted' : 'Deposited';
+      onSuccess(
+        `${actionText} GH₵ ${amountStr} ${
+          type === 'expense' ? 'from' : 'into'
+        } ${targetAccount?.name || 'account'}`
+      );
       onClose();
     } catch (err: unknown) {
       setErrorMsg((err as Error).message || 'Failed to save transaction');
@@ -179,20 +180,20 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
     return <HelpCircle className="w-3.5 h-3.5" />;
   }
 
-  function getAccountBadgeIcon(type: string) {
-    switch (type) {
+  function getAccountBadgeIcon(accType: string) {
+    switch (accType) {
       case 'cash':
-        return <Wallet className="w-4 h-4 text-amber-600" />;
+        return <Wallet className="w-5 h-5 text-amber-700" />;
       case 'mobile_money':
-        return <Smartphone className="w-4 h-4 text-emerald-600" />;
+        return <Smartphone className="w-5 h-5 text-emerald-700" />;
       case 'bank':
-        return <Landmark className="w-4 h-4 text-blue-600" />;
+        return <Landmark className="w-5 h-5 text-blue-700" />;
       case 'savings':
-        return <ShieldCheck className="w-4 h-4 text-violet-600" />;
+        return <ShieldCheck className="w-5 h-5 text-violet-700" />;
       case 'investment':
-        return <TrendingUp className="w-4 h-4 text-orange-600" />;
+        return <TrendingUp className="w-5 h-5 text-orange-700" />;
       default:
-        return <Building2 className="w-4 h-4 text-slate-500" />;
+        return <Building2 className="w-5 h-5 text-slate-500" />;
     }
   }
 
@@ -202,310 +203,244 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
         {/* Drag handle for mobile */}
         <div className="w-12 h-1.5 bg-outline-variant/60 rounded-full mx-auto -mt-1 mb-4 sm:hidden"></div>
 
-        {/* Modal Header */}
-        <div className="flex items-center justify-between pb-3">
-          <h2 className="text-xl font-bold text-primary dark:text-white">
-            {type === 'income' ? 'Add Income' : 'Add Expense'}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="w-9 h-9 rounded-full bg-surface-container-low text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4 pt-1">
-          {/* Segmented Type Toggle Pill */}
-          <div className="bg-surface-container-low p-1 rounded-full grid grid-cols-2 gap-1">
-            <button
-              type="button"
-              onClick={() => {
-                triggerHaptic();
-                setType('expense');
-              }}
-              className={`py-2 rounded-full font-semibold text-xs flex items-center justify-center gap-1.5 transition-all ${
-                type === 'expense'
-                  ? 'bg-primary text-white shadow-sm'
-                  : 'text-on-surface-variant hover:text-on-surface'
-              }`}
-            >
-              <ArrowUpRight className="w-3.5 h-3.5 text-red-400" />
-              <span>Expense</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                triggerHaptic();
-                setType('income');
-              }}
-              className={`py-2 rounded-full font-semibold text-xs flex items-center justify-center gap-1.5 transition-all ${
-                type === 'income'
-                  ? 'bg-primary text-white shadow-sm'
-                  : 'text-on-surface-variant hover:text-on-surface'
-              }`}
-            >
-              <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Income</span>
-            </button>
-          </div>
-
-          {/* Large Hero Amount Input */}
-          <div className="flex flex-col items-center justify-center py-4 bg-surface-container-low/50 rounded-2xl border border-outline-variant/20">
-            <span className="text-[11px] uppercase tracking-wider text-on-surface-variant font-medium mb-1">
-              Amount ({type.toUpperCase()})
-            </span>
-            <div className="flex items-baseline justify-center gap-2">
-              <span className="text-2xl font-bold text-secondary">
-                GH₵
-              </span>
-              <input
-                type="text"
-                inputMode="decimal"
-                autoFocus
-                placeholder="0.00"
-                value={amountStr}
-                onChange={(e) => setAmountStr(e.target.value)}
-                className="w-48 text-3xl sm:text-4xl font-extrabold tracking-tight text-center bg-transparent text-primary dark:text-white placeholder:text-outline focus:outline-none"
-              />
-            </div>
-          </div>
-
-          {/* Account Selector Card: Tap to open Pop-up Box */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-semibold text-primary dark:text-white">
-                {type === 'expense' ? 'Deduct From' : 'Deposit Into'}
-              </label>
-              <span className="text-[11px] text-secondary font-medium">
-                Tap to change account
-              </span>
+        {step === 'input' ? (
+          /* STEP 1: Enter Amount & Details */
+          <div className="space-y-4 animate-in fade-in duration-150">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-2 border-b border-outline-variant/20">
+              <h2 className="text-xl font-bold text-primary dark:text-white">
+                {type === 'income' ? 'Add Income' : 'Add Expense'}
+              </h2>
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close"
+                className="w-9 h-9 rounded-full bg-surface-container-low text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                triggerHaptic();
-                setShowAccountPicker(true);
-              }}
-              aria-label={`Choose account: currently ${selectedAccount?.name || 'none'}`}
-              className="w-full p-3 rounded-2xl bg-surface-container-low border border-outline-variant/30 flex items-center justify-between hover:bg-surface-container/80 transition-all group active:scale-[0.99]"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-surface-container-lowest flex items-center justify-center shadow-xs shrink-0">
-                  {selectedAccount ? getAccountBadgeIcon(selectedAccount.type) : <Wallet className="w-5 h-5 text-secondary" />}
-                </div>
-                <div className="min-w-0 text-left">
-                  <p className="text-xs font-bold text-primary dark:text-white truncate">
-                    {selectedAccount?.name || 'Select Account'}
-                  </p>
-                  <p className="text-[11px] text-on-surface-variant tabular-nums">
-                    Current Balance: {formatMinor(selectedAccountBalance, 'GHS')}
-                  </p>
+            <form onSubmit={handleProceedToAccountChoice} className="space-y-4 pt-1">
+              {/* Segmented Type Toggle Pill */}
+              <div className="bg-surface-container-low p-1 rounded-full grid grid-cols-2 gap-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic();
+                    setType('expense');
+                  }}
+                  className={`py-2 rounded-full font-semibold text-xs flex items-center justify-center gap-1.5 transition-all ${
+                    type === 'expense'
+                      ? 'bg-primary text-white shadow-sm'
+                      : 'text-on-surface-variant hover:text-on-surface'
+                  }`}
+                >
+                  <ArrowUpRight className="w-3.5 h-3.5 text-red-400" />
+                  <span>Expense</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic();
+                    setType('income');
+                  }}
+                  className={`py-2 rounded-full font-semibold text-xs flex items-center justify-center gap-1.5 transition-all ${
+                    type === 'income'
+                      ? 'bg-primary text-white shadow-sm'
+                      : 'text-on-surface-variant hover:text-on-surface'
+                  }`}
+                >
+                  <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Income</span>
+                </button>
+              </div>
+
+              {/* Large Hero Amount Input */}
+              <div className="flex flex-col items-center justify-center py-4 bg-surface-container-low/50 rounded-2xl border border-outline-variant/20">
+                <span className="text-[11px] uppercase tracking-wider text-on-surface-variant font-medium mb-1">
+                  Amount ({type.toUpperCase()})
+                </span>
+                <div className="flex items-baseline justify-center gap-2">
+                  <span className="text-2xl font-bold text-secondary">
+                    GH₵
+                  </span>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    autoFocus
+                    placeholder="0.00"
+                    value={amountStr}
+                    onChange={(e) => setAmountStr(e.target.value)}
+                    className="w-48 text-3xl sm:text-4xl font-extrabold tracking-tight text-center bg-transparent text-primary dark:text-white placeholder:text-outline focus:outline-none"
+                  />
                 </div>
               </div>
 
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container-lowest text-xs font-semibold text-secondary group-hover:bg-primary group-hover:text-white transition-colors shrink-0 shadow-2xs">
-                <span>Change</span>
-                <ChevronDown className="w-3.5 h-3.5" />
+              {/* Where or Category Input (Optional) */}
+              <div>
+                <label className="block text-xs font-semibold text-primary dark:text-white mb-1.5">
+                  Where or Custom Category (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Lunch, Uber, Project fee, Auntie Muni, Shell station..."
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low text-xs font-medium text-on-surface border border-outline-variant/20 placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-secondary/40"
+                />
               </div>
-            </button>
-          </div>
 
-          {/* Where or Category Input (Optional) */}
-          <div>
-            <label className="block text-xs font-semibold text-primary dark:text-white mb-1.5">
-              Where or Custom Category (Optional)
-            </label>
-            <input
-              type="text"
-              placeholder="Lunch, Uber, Project fee, Auntie Muni, Shell station..."
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low text-xs font-medium text-on-surface border border-outline-variant/20 placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-secondary/40"
-            />
-          </div>
+              {/* Category Chips Scroll Carousel */}
+              <div>
+                <label className="block text-[11px] font-semibold text-on-surface-variant mb-1.5">
+                  Quick Category Chips
+                </label>
+                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+                  {categories.map((cat) => {
+                    const isSelected = selectedCategoryId === cat.id;
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => {
+                          triggerHaptic();
+                          setSelectedCategoryId(cat.id);
+                        }}
+                        className={`shrink-0 h-[34px] px-3 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 ${
+                          isSelected
+                            ? 'bg-primary text-white shadow-sm'
+                            : 'bg-surface-container-low text-on-surface hover:bg-surface-container'
+                        }`}
+                      >
+                        {getChipIcon(cat.name)}
+                        <span>{cat.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-          {/* Category Chips Scroll Carousel */}
-          <div>
-            <label className="block text-[11px] font-semibold text-on-surface-variant mb-1.5">
-              Quick Category Chips
-            </label>
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
-              {categories.map((cat) => {
-                const isSelected = selectedCategoryId === cat.id;
+              {/* Date Picker */}
+              <div>
+                <label className="block text-xs font-semibold text-primary dark:text-white mb-1.5">
+                  Date
+                </label>
+                <div className="relative">
+                  <Calendar className="w-4 h-4 text-outline absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-surface-container-low text-xs font-medium text-on-surface border border-outline-variant/20 focus:outline-none focus:ring-2 focus:ring-secondary/40"
+                  />
+                </div>
+              </div>
+
+              {/* Error Message */}
+              {errorMsg && (
+                <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-300 text-xs font-medium">
+                  {errorMsg}
+                </div>
+              )}
+
+              {/* Submit Button -> Transitions to Pop-Up */}
+              <button
+                type="submit"
+                className="w-full py-3.5 px-4 rounded-2xl bg-primary hover:bg-primary-container active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition-all"
+              >
+                <span>{type === 'expense' ? 'Save Expense' : 'Save Income'}</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </form>
+          </div>
+        ) : (
+          /* STEP 2: Dedicated Pop-up asking where money is deducted/debited from */
+          <div className="animate-in fade-in slide-in-from-right-4 duration-200 space-y-4">
+            {/* Pop-up Navigation Header */}
+            <div className="flex items-center justify-between pb-2 border-b border-outline-variant/20">
+              <button
+                type="button"
+                onClick={() => setStep('input')}
+                className="text-xs font-semibold text-secondary hover:underline flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-surface-container-low transition-colors"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Edit Amount (GH₵ {amountStr})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close"
+                className="w-8 h-8 rounded-full bg-surface-container-low text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Prompt Question */}
+            <div className="text-center py-2 space-y-1">
+              <div
+                className="w-12 h-12 rounded-2xl mx-auto flex items-center justify-center mb-1.5 shadow-xs"
+                style={{
+                  backgroundColor: type === 'expense' ? '#fee2e2' : '#dcfce7',
+                  color: type === 'expense' ? '#dc2626' : '#16a34a',
+                }}
+              >
+                {type === 'expense' ? (
+                  <ArrowUpRight className="w-6 h-6" />
+                ) : (
+                  <ArrowDownLeft className="w-6 h-6" />
+                )}
+              </div>
+              <h3 className="text-base sm:text-lg font-extrabold text-primary dark:text-white leading-tight">
+                {type === 'expense'
+                  ? `Where are you taking this GH₵ ${amountStr} from?`
+                  : `Where are you depositing this GH₵ ${amountStr} into?`}
+              </h3>
+              <p className="text-xs text-on-surface-variant">
+                Strictly choose from your listed liquid assets:
+              </p>
+            </div>
+
+            {/* Listed Liquid Assets to strictly choose from */}
+            <div className="space-y-2.5 max-h-[55vh] overflow-y-auto pr-1">
+              {accounts.map((acc) => {
+                const bal = accountBalances.get(acc.id) ?? 0;
+                const afterBal = type === 'expense' ? bal - parsedAmount : bal + parsedAmount;
+
                 return (
                   <button
-                    key={cat.id}
+                    key={acc.id}
                     type="button"
-                    onClick={() => {
-                      triggerHaptic();
-                      setSelectedCategoryId(cat.id);
-                    }}
-                    className={`shrink-0 h-[34px] px-3 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 ${
-                      isSelected
-                        ? 'bg-primary text-white shadow-sm'
-                        : 'bg-surface-container-low text-on-surface hover:bg-surface-container'
-                    }`}
+                    aria-label={`Select account ${acc.name}`}
+                    onClick={() => handleConfirmSaveWithAccount(acc.id)}
+                    disabled={isSubmitting}
+                    className="w-full p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30 hover:border-primary hover:bg-surface-container flex items-center justify-between gap-3 transition-all active:scale-[0.99] group shadow-xs hover:shadow-md text-left disabled:opacity-50"
                   >
-                    {getChipIcon(cat.name)}
-                    <span>{cat.name}</span>
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <div className="w-11 h-11 rounded-2xl bg-surface-container-lowest flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform">
+                        {getAccountBadgeIcon(acc.type)}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-primary dark:text-white truncate">
+                          {acc.name}
+                        </p>
+                        <p className="text-xs text-on-surface-variant tabular-nums">
+                          Available: {formatMinor(bal, 'GHS')}
+                        </p>
+                        <p className="text-[11px] font-semibold text-secondary tabular-nums mt-0.5">
+                          After: {formatMinor(afterBal, 'GHS')}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="px-3.5 py-2 rounded-xl bg-primary text-white text-xs font-bold shrink-0 shadow-xs group-hover:bg-primary-container transition-colors">
+                      {type === 'expense' ? 'Deduct' : 'Deposit'}
+                    </div>
                   </button>
                 );
               })}
-            </div>
-          </div>
-
-          {/* Date Picker */}
-          <div>
-            <label className="block text-xs font-semibold text-primary dark:text-white mb-1.5">
-              Date
-            </label>
-            <div className="relative">
-              <Calendar className="w-4 h-4 text-outline absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-surface-container-low text-xs font-medium text-on-surface border border-outline-variant/20 focus:outline-none focus:ring-2 focus:ring-secondary/40"
-              />
-            </div>
-          </div>
-
-          {/* Error Message */}
-          {errorMsg && (
-            <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-300 text-xs font-medium">
-              {errorMsg}
-            </div>
-          )}
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full py-3.5 px-4 rounded-2xl bg-primary hover:bg-primary-container active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition-all disabled:opacity-50"
-          >
-            <Check className="w-4 h-4 stroke-[3]" />
-            <span>{type === 'income' ? 'Save Income' : 'Save Expense'}</span>
-          </button>
-        </form>
-
-        {/* Dedicated Account Pop-up Box / Modal */}
-        {showAccountPicker && (
-          <div className="fixed inset-0 z-60 bg-black/70 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="bg-surface-container-lowest dark:bg-slate-900 max-w-md w-full rounded-t-[32px] sm:rounded-[32px] p-6 shadow-2xl border border-outline-variant/30 flex flex-col max-h-[85vh]">
-              {/* Pop-up Header */}
-              <div className="flex items-center justify-between pb-3 border-b border-outline-variant/20">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-primary text-secondary-container flex items-center justify-center shadow-xs">
-                    <Layers className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-primary dark:text-white leading-tight">
-                      {type === 'expense' ? 'Choose Account to Deduct From' : 'Choose Account to Deposit Into'}
-                    </h3>
-                    <p className="text-[11px] text-on-surface-variant">
-                      Select which wallet or account is affected
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setShowAccountPicker(false)}
-                  aria-label="Close account picker"
-                  className="w-8 h-8 rounded-full bg-surface-container-low text-on-surface-variant hover:text-on-surface flex items-center justify-center"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Pop-up Account List */}
-              <div className="flex-1 overflow-y-auto space-y-2.5 py-3 pr-1">
-                {accounts.map((acc) => {
-                  const bal = accountBalances.get(acc.id) ?? 0;
-                  const isSelected = (selectedAccountId || accounts[0]?.id) === acc.id;
-                  const newBal = type === 'expense' ? bal - parsedAmount : bal + parsedAmount;
-
-                  return (
-                    <button
-                      key={acc.id}
-                      type="button"
-                      aria-label={`Select account ${acc.name}`}
-                      onClick={() => {
-                        triggerHaptic();
-                        setSelectedAccountId(acc.id);
-                        setShowAccountPicker(false);
-                      }}
-                      className={`w-full p-3.5 rounded-2xl border text-left flex items-center justify-between gap-3 transition-all ${
-                        isSelected
-                          ? 'bg-primary text-white border-primary shadow-sm ring-2 ring-secondary/30'
-                          : 'bg-surface-container-low/70 border-outline-variant/20 hover:bg-surface-container hover:border-outline-variant/40'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div
-                          className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                            isSelected ? 'bg-white/20 text-white' : 'bg-surface-container-lowest shadow-xs'
-                          }`}
-                        >
-                          {getAccountBadgeIcon(acc.type)}
-                        </div>
-                        <div className="min-w-0">
-                          <p
-                            className={`text-xs font-bold truncate ${
-                              isSelected ? 'text-white' : 'text-primary dark:text-white'
-                            }`}
-                          >
-                            {acc.name}
-                          </p>
-                          <p
-                            className={`text-[11px] tabular-nums ${
-                              isSelected ? 'text-white/80' : 'text-on-surface-variant'
-                            }`}
-                          >
-                            Current: {formatMinor(bal, 'GHS')}
-                          </p>
-                          {parsedAmount > 0 && (
-                            <p
-                              className={`text-[10px] font-semibold mt-0.5 tabular-nums ${
-                                isSelected ? 'text-secondary-fixed' : 'text-secondary'
-                              }`}
-                            >
-                              After {type === 'expense' ? 'deduction' : 'deposit'}: {formatMinor(newBal, 'GHS')}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="shrink-0 flex items-center">
-                        {isSelected ? (
-                          <div className="w-7 h-7 rounded-full bg-secondary text-primary flex items-center justify-center font-bold">
-                            <Check className="w-4 h-4 stroke-[3]" />
-                          </div>
-                        ) : (
-                          <span className="text-xs text-on-surface-variant font-medium px-2 py-1 rounded-lg bg-surface-container-lowest">
-                            Select
-                          </span>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Pop-up Footer */}
-              <div className="pt-2 border-t border-outline-variant/20">
-                <button
-                  type="button"
-                  onClick={() => setShowAccountPicker(false)}
-                  className="w-full py-2.5 rounded-xl bg-surface-container-low text-xs font-semibold text-on-surface hover:bg-surface-container"
-                >
-                  Done
-                </button>
-              </div>
             </div>
           </div>
         )}

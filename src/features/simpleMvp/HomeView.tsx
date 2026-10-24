@@ -287,25 +287,15 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setShowSettingsModal(true)}
-            aria-label="Settings and liquid asset calibration"
-            className="w-9 h-9 rounded-xl bg-surface-container-low text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors"
-          >
-            <Settings className="w-4 h-4" />
-          </button>
-
-          <button
-            type="button"
-            onClick={onOpenAdd}
-            className="px-3.5 py-2 rounded-xl bg-primary hover:bg-primary-container text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm active:scale-95 transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            <span>New Entry</span>
-          </button>
-        </div>
+        {/* Top Right Settings Button */}
+        <button
+          type="button"
+          onClick={() => setShowSettingsModal(true)}
+          aria-label="Settings and liquid asset calibration"
+          className="w-10 h-10 rounded-2xl bg-surface-container-low hover:bg-surface-container text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-all shadow-xs"
+        >
+          <Settings className="w-5 h-5" />
+        </button>
       </header>
 
       {/* Hero Card: Total Liquid Balance & Inflow / Outflow */}

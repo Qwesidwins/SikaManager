@@ -39,9 +39,13 @@ describe('Simple MVP: Core Financial Flow & Visual Analytics', () => {
     const noteInput = screen.getByPlaceholderText(/Lunch, Uber, Project fee/i);
     fireEvent.change(noteInput, { target: { value: 'Design client payout' } });
 
-    // Submit
+    // Click Save Income -> opens Pop-up asking where to deposit
     const submitBtn = screen.getByRole('button', { name: /Save Income/i });
     fireEvent.click(submitBtn);
+
+    // Pop-up asks: "Where are you depositing this GH₵ 500 into?" -> strictly choose from liquid assets
+    const cashDepositBtn = await screen.findByLabelText(/Select account Cash in Hand/i);
+    fireEvent.click(cashDepositBtn);
 
     // Verify Inflow updated
     await waitFor(() => {
@@ -59,6 +63,10 @@ describe('Simple MVP: Core Financial Flow & Visual Analytics', () => {
 
     const saveExpenseBtn = screen.getByRole('button', { name: /Save Expense/i });
     fireEvent.click(saveExpenseBtn);
+
+    // Pop-up asks: "Where are you taking this GH₵ 120 from?" -> choose Cash in Hand
+    const cashDeductBtn = await screen.findByLabelText(/Select account Cash in Hand/i);
+    fireEvent.click(cashDeductBtn);
 
     // Verify Expense and Net Balance: 500 - 120 = 380
     await waitFor(() => {
@@ -114,20 +122,17 @@ describe('Simple MVP: Core Financial Flow & Visual Analytics', () => {
     const amountInput = screen.getByPlaceholderText('0.00');
     fireEvent.change(amountInput, { target: { value: '50' } });
 
-    // Open Account Pop-up Box
-    const accountTrigger = screen.getByLabelText(/Choose account/i);
-    fireEvent.click(accountTrigger);
-
-    // Select "Test MTN MoMo" account in pop-up
-    const momoAccountBtn = await screen.findByLabelText(/Select account Test MTN MoMo/i);
-    fireEvent.click(momoAccountBtn);
-
     // Add optional custom place/category
     const noteInput = screen.getByPlaceholderText(/Lunch, Uber, Project fee/i);
     fireEvent.change(noteInput, { target: { value: 'Shell Fuel station' } });
 
+    // Click Save Expense -> Pops up asking "Where are you taking this GH₵ 50 from?"
     const saveExpenseBtn = screen.getByRole('button', { name: /Save Expense/i });
     fireEvent.click(saveExpenseBtn);
+
+    // Strictly choose "Test MTN MoMo" in pop-up
+    const momoAccountBtn = await screen.findByLabelText(/Select account Test MTN MoMo/i);
+    fireEvent.click(momoAccountBtn);
 
     // Verify balance reduced: 250 - 50 = 200
     await waitFor(() => {
