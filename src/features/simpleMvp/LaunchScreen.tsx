@@ -34,12 +34,12 @@ export const LaunchScreen: React.FC<LaunchScreenProps> = ({ onFinish }) => {
   return (
     <div
       onClick={onFinish}
-      className={`fixed inset-0 z-100 flex flex-col items-center justify-center bg-[#000a24] text-white select-none transition-opacity duration-500 ease-out cursor-pointer ${
+      className={`fixed inset-0 z-100 flex flex-col items-center justify-center bg-[#000a24] select-none transition-opacity duration-500 ease-out cursor-pointer ${
         isExiting ? 'opacity-0 pointer-events-none' : 'opacity-100'
       }`}
     >
-      {/* Subtle ambient background glow */}
-      <div className="absolute w-80 h-80 sm:w-[32rem] sm:h-[32rem] rounded-full bg-amber-500/10 blur-3xl pointer-events-none animate-pulse" />
+      {/* Ambient background glow using site gold */}
+      <div className="absolute w-80 h-80 sm:w-[32rem] sm:h-[32rem] rounded-full bg-[#ffc657]/10 blur-3xl pointer-events-none animate-pulse" />
 
       {/* Main smooth scale-up container */}
       <div
@@ -49,8 +49,8 @@ export const LaunchScreen: React.FC<LaunchScreenProps> = ({ onFinish }) => {
             : 'scale-50 opacity-0 translate-y-6'
         }`}
       >
-        {/* SikaManager Big Scale-Up Heading */}
-        <h1 className="text-5xl sm:text-7xl md:text-8xl font-black tracking-tight bg-gradient-to-r from-white via-slate-100 to-amber-300 bg-clip-text text-transparent drop-shadow-sm">
+        {/* SikaManager Heading using exact site yellow */}
+        <h1 className="text-5xl sm:text-7xl md:text-8xl font-black tracking-tight text-[#ffc657] drop-shadow-sm">
           SikaManager
         </h1>
 
@@ -63,15 +63,15 @@ export const LaunchScreen: React.FC<LaunchScreenProps> = ({ onFinish }) => {
           Personal Cash Tracker
         </p>
 
-        {/* Subtle bouncing indicator dots */}
+        {/* Minimalist indicator dots in matching site yellow */}
         <div
           className={`mt-6 flex items-center justify-center gap-2 transition-all duration-700 ${
             isScaled ? 'opacity-100 delay-500' : 'opacity-0'
           }`}
         >
-          <span className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-          <span className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-          <span className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+          <span className="w-2 h-2 rounded-full bg-[#ffc657]" />
+          <span className="w-2 h-2 rounded-full bg-[#ffc657]" />
+          <span className="w-2 h-2 rounded-full bg-[#ffc657]" />
         </div>
       </div>
     </div>
