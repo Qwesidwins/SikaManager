@@ -16,13 +16,13 @@ describe('New Features: LaunchScreen, Salary/Stipends, Passcode/Biometrics, Ligh
     localStorage.clear();
   });
 
-  it('renders LaunchScreen with scale-up and typewriter animation, without icons/circle, and finishes on click', async () => {
+  it('renders LaunchScreen with smooth scale-up animation, without icons/circle, and finishes on click', async () => {
     let finished = false;
     render(<LaunchScreen onFinish={() => { finished = true; }} />);
 
-    // Wait for typewriter to type out SikaManager
+    // Renders SikaManager and Personal Cash Tracker
     await waitFor(() => {
-      expect(screen.getByText(/SikaManager/i)).toBeInTheDocument();
+      expect(screen.getByText('SikaManager')).toBeInTheDocument();
       expect(screen.getByText('Personal Cash Tracker')).toBeInTheDocument();
     });
 
