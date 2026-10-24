@@ -9,6 +9,7 @@ import { seedInitialDataIfNeeded } from '@/db/seed';
 import { formatMinor } from '@/domain/money';
 import { accountBalance } from '@/domain/balance';
 import { triggerHaptic } from '@/lib/haptics';
+import { FinanceWidgetCard } from './FinanceWidgetCard';
 import type { Transaction, Category, TransactionType, Account } from '@/domain/types';
 import {
   Wallet,
@@ -40,6 +41,7 @@ import {
   Lock,
   Fingerprint,
   Check,
+  Download,
 } from 'lucide-react';
 
 interface HomeViewProps {
@@ -79,6 +81,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const [accountToDelete, setAccountToDelete] = useState<Account | null>(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showInstallGuide, setShowInstallGuide] = useState(false);
 
   // Security settings
   const [hasPasscode, setHasPasscode] = useState(false);
@@ -465,6 +468,16 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Interactive Expandable/Contracted Live Widget Card */}
+      <FinanceWidgetCard
+        monthLabel={selectedMonth === 'all' ? 'All-Time' : formatMonthLabel(selectedMonth)}
+        transactions={monthTransactions}
+        accounts={accounts}
+        categories={categories}
+        totalIncomeMinor={totalIncomeMinor}
+        totalExpenseMinor={totalExpenseMinor}
+      />
 
       {/* Liquid Assets Dashboard Section */}
       <div className="space-y-2.5">
@@ -899,6 +912,25 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 )}
               </div>
 
+              {/* Install App & Home Screen Info */}
+              <button
+                type="button"
+                onClick={() => setShowInstallGuide(true)}
+                className="w-full p-3 rounded-2xl bg-surface-container-low text-left flex items-center gap-3 hover:bg-surface-container transition-colors"
+              >
+                <div className="w-8 h-8 rounded-xl bg-surface-container-lowest text-secondary flex items-center justify-center shadow-xs">
+                  <Download className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-primary dark:text-white">
+                    Install App & Home Screen
+                  </p>
+                  <p className="text-[10px] text-on-surface-variant">
+                    How to install on phone & access home screen shortcuts
+                  </p>
+                </div>
+              </button>
+
               {/* Calibrate Liquid Money */}
               <button
                 type="button"
@@ -973,6 +1005,67 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 Yes, Reset All
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Install App & Home Screen Widget Guide Modal */}
+      {showInstallGuide && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-surface-container-lowest max-w-sm w-full rounded-3xl p-6 shadow-2xl border border-outline-variant/30 space-y-4 max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-2 border-b border-outline-variant/20">
+              <div className="flex items-center gap-2">
+                <Smartphone className="w-5 h-5 text-secondary" />
+                <h3 className="text-base font-bold text-primary dark:text-white">
+                  Phone Installation & Widgets
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowInstallGuide(false)}
+                className="w-8 h-8 rounded-full bg-surface-container-low text-on-surface-variant hover:text-on-surface flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs text-on-surface-variant">
+              {/* Android Guide */}
+              <div className="p-3 rounded-2xl bg-surface-container-low space-y-1">
+                <p className="font-bold text-primary dark:text-white">On Android (Chrome / Edge)</p>
+                <p>1. Tap the three dots menu (⋮) in your browser.</p>
+                <p>2. Tap &quot;Install App&quot; or &quot;Add to Home screen&quot;.</p>
+                <p className="text-slate-500 pt-1">
+                  💡 Once installed, long-press the SikaManager icon on your home screen for quick shortcuts (Add Expense, Income, Insights).
+                </p>
+              </div>
+
+              {/* iOS Guide */}
+              <div className="p-3 rounded-2xl bg-surface-container-low space-y-1">
+                <p className="font-bold text-primary dark:text-white">On iPhone / iPad (Safari)</p>
+                <p>1. Tap the Share button at the bottom of Safari.</p>
+                <p>2. Scroll down and tap &quot;Add to Home Screen&quot;.</p>
+                <p className="text-slate-500 pt-1">
+                  💡 Apple iOS does not allow web browsers to install native WidgetKit widgets directly, but long-pressing the app icon provides instant actions.
+                </p>
+              </div>
+
+              {/* In-App Live Widget */}
+              <div className="p-3 rounded-2xl bg-amber-50/80 border border-amber-200/60 space-y-1 text-amber-900">
+                <p className="font-bold text-amber-950">Live Cashflow Widget</p>
+                <p>
+                  Use the live widget directly at the top of your SikaManager dashboard. Tap &quot;Expand&quot; to see full visual breakdowns of cashflow, or &quot;Contract&quot; for a compact glance!
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowInstallGuide(false)}
+              className="w-full py-2.5 rounded-xl bg-primary text-white text-xs font-bold"
+            >
+              Got it
+            </button>
           </div>
         </div>
       )}

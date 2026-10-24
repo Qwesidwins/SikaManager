@@ -9,6 +9,7 @@ import { InsightsView } from '@/features/simpleMvp/InsightsView';
 import { AddTransactionModal } from '@/features/simpleMvp/AddTransactionModal';
 import { LiquidOnboardingModal } from '@/features/simpleMvp/LiquidOnboardingModal';
 import { BottomNav, type MvpTab } from '@/features/simpleMvp/BottomNav';
+import { InstallPromptBanner } from '@/features/pwa/InstallPromptBanner';
 
 interface AppProps {
   skipLaunchScreen?: boolean;
@@ -19,6 +20,18 @@ export default function App({
 }: AppProps = {}): React.ReactElement {
   useEffect(() => {
     applyLightMode();
+    // Check URL shortcuts when opened from home screen long-press
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const action = params.get('action');
+      const tab = params.get('tab');
+      if (action === 'add-expense' || action === 'add-income') {
+        setIsAddModalOpen(true);
+      }
+      if (tab === 'insights') {
+        setCurrentTab('insights');
+      }
+    }
   }, []);
   const [showLaunchScreen, setShowLaunchScreen] = useState(!skipLaunchScreen);
   const [isLocked, setIsLocked] = useState(false);
@@ -153,6 +166,9 @@ export default function App({
         onSelectTab={setCurrentTab}
         onOpenAdd={() => setIsAddModalOpen(true)}
       />
+
+      {/* PWA Install Prompt Banner */}
+      <InstallPromptBanner />
     </div>
   );
 }
