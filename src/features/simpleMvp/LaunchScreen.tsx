@@ -1,39 +1,49 @@
 import React, { useState, useEffect } from 'react';
-import { Wallet, Sparkles } from 'lucide-react';
 
 interface LaunchScreenProps {
   onFinish: () => void;
 }
 
+const FULL_TEXT = 'SikaManager';
+
 export const LaunchScreen: React.FC<LaunchScreenProps> = ({ onFinish }) => {
-  const [phase, setPhase] = useState<'initial' | 'morph' | 'reveal' | 'exit'>('initial');
+  const [displayedText, setDisplayedText] = useState('');
+  const [isTypingDone, setIsTypingDone] = useState(false);
+  const [isScaledUp, setIsScaledUp] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
 
   useEffect(() => {
-    // Phase 1 -> 2: Shape morphs into emblem
-    const t1 = setTimeout(() => {
-      setPhase('morph');
-    }, 450);
+    // Start scale up immediately
+    const scaleTimer = setTimeout(() => {
+      setIsScaledUp(true);
+    }, 100);
 
-    // Phase 2 -> 3: SikaManger brand text scales in & reveals
-    const t2 = setTimeout(() => {
-      setPhase('reveal');
-    }, 1050);
+    // Typewriter effect
+    let currentIndex = 0;
+    const typeInterval = setInterval(() => {
+      currentIndex++;
+      setDisplayedText(FULL_TEXT.slice(0, currentIndex));
+      if (currentIndex >= FULL_TEXT.length) {
+        clearInterval(typeInterval);
+        setIsTypingDone(true);
+      }
+    }, 75);
 
-    // Phase 3 -> 4: Exit transition
-    const t3 = setTimeout(() => {
-      setPhase('exit');
-    }, 2000);
+    // Exit transition
+    const exitTimer = setTimeout(() => {
+      setIsExiting(true);
+    }, 2100);
 
-    // Finish and unmount
-    const t4 = setTimeout(() => {
+    // Finish callback
+    const finishTimer = setTimeout(() => {
       onFinish();
-    }, 2450);
+    }, 2500);
 
     return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-      clearTimeout(t4);
+      clearTimeout(scaleTimer);
+      clearInterval(typeInterval);
+      clearTimeout(exitTimer);
+      clearTimeout(finishTimer);
     };
   }, [onFinish]);
 
@@ -41,58 +51,51 @@ export const LaunchScreen: React.FC<LaunchScreenProps> = ({ onFinish }) => {
     <div
       onClick={onFinish}
       className={`fixed inset-0 z-100 flex flex-col items-center justify-center bg-[#000a24] text-white select-none transition-opacity duration-500 ease-out cursor-pointer ${
-        phase === 'exit' ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        isExiting ? 'opacity-0 pointer-events-none' : 'opacity-100'
       }`}
     >
-      {/* Background radial glow */}
-      <div className="absolute w-72 h-72 sm:w-96 sm:h-96 rounded-full bg-amber-500/10 blur-3xl pointer-events-none animate-pulse" />
+      {/* Subtle ambient background glow */}
+      <div className="absolute w-80 h-80 sm:w-[32rem] sm:h-[32rem] rounded-full bg-amber-500/10 blur-3xl pointer-events-none animate-pulse" />
 
-      {/* Central morphing emblem */}
-      <div className="relative flex flex-col items-center justify-center">
-        {/* Morphing Shape */}
-        <div
-          className={`transition-all duration-700 ease-out flex items-center justify-center ${
-            phase === 'initial'
-              ? 'w-16 h-16 rounded-full bg-gradient-to-tr from-amber-500 to-amber-300 scale-75 shadow-lg shadow-amber-500/40 rotate-12'
-              : 'w-20 h-20 rounded-[28px] bg-gradient-to-tr from-amber-600 via-amber-500 to-amber-400 scale-100 shadow-2xl shadow-amber-500/50 rotate-0'
-          }`}
-        >
-          {phase === 'initial' ? (
-            <div className="w-6 h-6 rounded-full bg-white/30 animate-ping" />
-          ) : (
-            <div className="flex items-center justify-center animate-in zoom-in-75 duration-300">
-              <Wallet className="w-10 h-10 text-slate-950 stroke-[2.2]" />
-            </div>
-          )}
+      {/* Main scaling & typewriting text container */}
+      <div
+        className={`relative flex flex-col items-center justify-center px-4 text-center transition-all duration-1000 ease-out transform ${
+          isScaledUp ? 'scale-100 sm:scale-110 opacity-100' : 'scale-75 opacity-80'
+        }`}
+      >
+        {/* SikaManager Big Heading */}
+        <div className="flex items-center justify-center">
+          <h1 className="text-5xl sm:text-7xl md:text-8xl font-black tracking-tight bg-gradient-to-r from-white via-slate-100 to-amber-300 bg-clip-text text-transparent drop-shadow-sm">
+            {displayedText || '\u00A0'}
+          </h1>
+          {/* Typewriter blinking cursor */}
+          <span
+            className={`inline-block w-1 sm:w-1.5 md:w-2 h-10 sm:h-14 md:h-18 bg-amber-400 ml-1.5 rounded-full align-middle transition-opacity duration-200 ${
+              isTypingDone ? 'animate-pulse' : 'opacity-100'
+            }`}
+          />
         </div>
 
-        {/* Brand Text Reveal */}
-        <div
-          className={`mt-6 text-center transition-all duration-700 ease-out ${
-            phase === 'reveal' || phase === 'exit'
-              ? 'opacity-100 translate-y-0 scale-100'
-              : 'opacity-0 translate-y-4 scale-95'
+        {/* Subtitle */}
+        <p
+          className={`mt-4 text-xs sm:text-sm uppercase tracking-[0.25em] text-slate-400 font-semibold transition-all duration-700 ${
+            displayedText.length > 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
           }`}
         >
-          <div className="flex items-center justify-center gap-1.5">
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-amber-200 bg-clip-text text-transparent">
-              SikaManger
-            </h1>
-            <Sparkles className="w-4 h-4 text-amber-400 animate-spin" style={{ animationDuration: '4s' }} />
-          </div>
+          Personal Cash Tracker
+        </p>
 
-          <p className="text-xs uppercase tracking-widest text-slate-400 font-medium mt-1.5">
-            Personal Cash Tracker
-          </p>
-
-          <div className="mt-4 flex items-center justify-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '300ms' }} />
-          </div>
+        {/* Subtle bouncing indicator dots */}
+        <div
+          className={`mt-6 flex items-center justify-center gap-2 transition-opacity duration-500 ${
+            isTypingDone ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
+          <span className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+          <span className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+          <span className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '300ms' }} />
         </div>
       </div>
     </div>
   );
 };
-

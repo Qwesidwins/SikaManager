@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import React from 'react';
 import App from '@/App';
 import { LaunchScreen } from '@/features/simpleMvp/LaunchScreen';
 import { clearAllDatabaseData } from '@/db/database';
@@ -9,7 +8,7 @@ import { categoriesRepo } from '@/db/repositories/categoriesRepo';
 import { settingsRepo } from '@/db/repositories/settingsRepo';
 import { hashPasscode } from '@/crypto/passcode';
 
-describe('New Features: LaunchScreen, Salary/Stipends, Passcode/Biometrics, Dark/Light Mode', () => {
+describe('New Features: LaunchScreen, Salary/Stipends, Passcode/Biometrics, Light Mode Enforced', () => {
   beforeEach(async () => {
     await clearAllDatabaseData();
     await seedInitialDataIfNeeded();
@@ -17,15 +16,21 @@ describe('New Features: LaunchScreen, Salary/Stipends, Passcode/Biometrics, Dark
     localStorage.clear();
   });
 
-  it('renders LaunchScreen with morphing emblem and brand text, and finishes on click', () => {
+  it('renders LaunchScreen with scale-up and typewriter animation, without icons/circle, and finishes on click', async () => {
     let finished = false;
     render(<LaunchScreen onFinish={() => { finished = true; }} />);
 
-    expect(screen.getByText('SikaManger')).toBeInTheDocument();
-    expect(screen.getByText('Personal Cash Tracker')).toBeInTheDocument();
+    // Wait for typewriter to type out SikaManager
+    await waitFor(() => {
+      expect(screen.getByText(/SikaManager/i)).toBeInTheDocument();
+      expect(screen.getByText('Personal Cash Tracker')).toBeInTheDocument();
+    });
+
+    // Verify icons/circle/sparkle are not present
+    expect(screen.queryByTestId('sparkle-icon')).toBeNull();
 
     // Click to finish
-    fireEvent.click(screen.getByText('SikaManger'));
+    fireEvent.click(screen.getByText(/SikaManager/i));
     expect(finished).toBe(true);
   });
 
@@ -39,25 +44,25 @@ describe('New Features: LaunchScreen, Salary/Stipends, Passcode/Biometrics, Dark
     expect(freelanceCat).toBeUndefined();
   });
 
-  it('toggles Dark and Light mode from header button and updates html root class', async () => {
+  it('enforces light mode and ensures dark mode toggle is disabled/removed', async () => {
     render(<App />);
 
     await waitFor(() => {
       expect(screen.getByText('Total Balance')).toBeInTheDocument();
     });
 
-    const themeBtn = screen.getByLabelText(/Switch to/i);
+    // Verify root is in light mode
     expect(document.documentElement.classList.contains('dark')).toBe(false);
 
-    // Toggle to dark mode
-    fireEvent.click(themeBtn);
-    expect(document.documentElement.classList.contains('dark')).toBe(true);
-    expect(localStorage.getItem('sikamanger-theme')).toBe('dark');
+    // Verify theme toggle button does not exist in header
+    expect(screen.queryByLabelText(/Switch to.*mode/i)).toBeNull();
 
-    // Toggle back to light mode
-    fireEvent.click(themeBtn);
-    expect(document.documentElement.classList.contains('dark')).toBe(false);
-    expect(localStorage.getItem('sikamanger-theme')).toBe('light');
+    // Open settings and verify appearance toggle is not present
+    const settingsBtn = screen.getByLabelText('Settings and security');
+    fireEvent.click(settingsBtn);
+
+    expect(screen.getByText('SikaManger Settings')).toBeInTheDocument();
+    expect(screen.queryByText('Appearance')).toBeNull();
   });
 
   it('allows setting up a 4-digit PIN in settings and locking the app', async () => {

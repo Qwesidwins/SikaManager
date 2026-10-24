@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { seedInitialDataIfNeeded } from '@/db/seed';
 import { settingsRepo } from '@/db/repositories/settingsRepo';
-import { useTheme } from '@/lib/theme';
+import { applyLightMode } from '@/lib/theme';
 import { LaunchScreen } from '@/features/simpleMvp/LaunchScreen';
 import { LockScreen } from '@/features/lock/LockScreen';
 import { HomeView } from '@/features/simpleMvp/HomeView';
@@ -17,7 +17,9 @@ interface AppProps {
 export default function App({
   skipLaunchScreen = process.env.NODE_ENV === 'test',
 }: AppProps = {}): React.ReactElement {
-  useTheme(); // Initialize and bind theme
+  useEffect(() => {
+    applyLightMode();
+  }, []);
   const [showLaunchScreen, setShowLaunchScreen] = useState(!skipLaunchScreen);
   const [isLocked, setIsLocked] = useState(false);
   const [passcodeHash, setPasscodeHash] = useState<string | null>(null);

@@ -4,7 +4,6 @@ import { categoriesRepo } from '@/db/repositories/categoriesRepo';
 import { accountsRepo } from '@/db/repositories/accountsRepo';
 import { settingsRepo } from '@/db/repositories/settingsRepo';
 import { hashPasscode } from '@/crypto/passcode';
-import { useTheme } from '@/lib/theme';
 import { clearAllDatabaseData } from '@/db/database';
 import { seedInitialDataIfNeeded } from '@/db/seed';
 import { formatMinor } from '@/domain/money';
@@ -38,8 +37,6 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
-  Sun,
-  Moon,
   Lock,
   Fingerprint,
   Check,
@@ -82,9 +79,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const [accountToDelete, setAccountToDelete] = useState<Account | null>(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-
-  // Theme
-  const { theme, toggleTheme } = useTheme();
 
   // Security settings
   const [hasPasscode, setHasPasscode] = useState(false);
@@ -369,37 +363,19 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </div>
         </div>
 
-        {/* Top Right Actions: Dark/Light Mode + Settings */}
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              triggerHaptic();
-              toggleTheme();
-            }}
-            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-            className="w-10 h-10 rounded-2xl bg-surface-container-low hover:bg-surface-container text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-all shadow-xs"
-          >
-            {theme === 'dark' ? (
-              <Sun className="w-5 h-5 text-amber-400" />
-            ) : (
-              <Moon className="w-5 h-5 text-slate-700" />
-            )}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              triggerHaptic();
-              loadSecuritySettings();
-              setShowSettingsModal(true);
-            }}
-            aria-label="Settings and security"
-            className="w-10 h-10 rounded-2xl bg-surface-container-low hover:bg-surface-container text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-all shadow-xs"
-          >
-            <Settings className="w-5 h-5" />
-          </button>
-        </div>
+        {/* Top Right Action: Settings */}
+        <button
+          type="button"
+          onClick={() => {
+            triggerHaptic();
+            loadSecuritySettings();
+            setShowSettingsModal(true);
+          }}
+          aria-label="Settings and security"
+          className="w-10 h-10 rounded-2xl bg-surface-container-low hover:bg-surface-container text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-all shadow-xs"
+        >
+          <Settings className="w-5 h-5" />
+        </button>
       </header>
 
       {/* Hero Card: Total Liquid Balance & Inflow / Outflow */}
@@ -792,38 +768,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
             </div>
 
             <div className="space-y-3 max-h-[75vh] overflow-y-auto pr-1">
-              {/* Appearance Mode Toggle */}
-              <div className="p-3.5 rounded-2xl bg-surface-container-low flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-surface-container-lowest text-amber-500 flex items-center justify-center shadow-xs">
-                    {theme === 'dark' ? (
-                      <Sun className="w-4 h-4 text-amber-400" />
-                    ) : (
-                      <Moon className="w-4 h-4 text-slate-700" />
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-primary dark:text-white">
-                      Appearance
-                    </p>
-                    <p className="text-[10px] text-on-surface-variant">
-                      {theme === 'dark' ? 'Dark theme enabled' : 'Light theme enabled'}
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    triggerHaptic();
-                    toggleTheme();
-                  }}
-                  className="px-3 py-1.5 rounded-xl bg-surface-container-lowest text-xs font-bold text-primary dark:text-white border border-outline-variant/30 hover:bg-surface-container transition-colors"
-                >
-                  {theme === 'dark' ? 'Light' : 'Dark'}
-                </button>
-              </div>
-
               {/* Security Section */}
               <div className="p-3.5 rounded-2xl bg-surface-container-low space-y-3">
                 <div className="flex items-center justify-between">
