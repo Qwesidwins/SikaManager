@@ -2,6 +2,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { transactionsRepo } from '@/db/repositories/transactionsRepo';
 import { categoriesRepo } from '@/db/repositories/categoriesRepo';
 import { accountsRepo } from '@/db/repositories/accountsRepo';
+import { settingsRepo } from '@/db/repositories/settingsRepo';
+import { hashPasscode } from '@/crypto/passcode';
+import { useTheme } from '@/lib/theme';
 import { clearAllDatabaseData } from '@/db/database';
 import { seedInitialDataIfNeeded } from '@/db/seed';
 import { formatMinor } from '@/domain/money';
@@ -35,6 +38,11 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
+  Sun,
+  Moon,
+  Lock,
+  Fingerprint,
+  Check,
 } from 'lucide-react';
 
 interface HomeViewProps {
@@ -70,14 +78,88 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
 
-  // Modals
+  // Modals & Settings
   const [accountToDelete, setAccountToDelete] = useState<Account | null>(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
+  // Theme
+  const { theme, toggleTheme } = useTheme();
+
+  // Security settings
+  const [hasPasscode, setHasPasscode] = useState(false);
+  const [biometricActive, setBiometricActive] = useState(false);
+  const [biometricsAvailable, setBiometricsAvailable] = useState(false);
+  const [showPinSetup, setShowPinSetup] = useState(false);
+  const [newPin, setNewPin] = useState('');
+  const [confirmNewPin, setConfirmNewPin] = useState('');
+  const [pinError, setPinError] = useState('');
+
   useEffect(() => {
     loadData();
+    loadSecuritySettings();
   }, []);
+
+  async function loadSecuritySettings() {
+    try {
+      const lockEnabled = await settingsRepo.get('lockEnabled');
+      const hash = await settingsRepo.get('passcodeHash');
+      const bio = await settingsRepo.get('biometricEnabled');
+      setHasPasscode(Boolean(lockEnabled && hash));
+      setBiometricActive(Boolean(bio));
+      if (
+        typeof window !== 'undefined' &&
+        window.PublicKeyCredential &&
+        typeof window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === 'function'
+      ) {
+        const avail = await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        setBiometricsAvailable(avail);
+      }
+    } catch {
+      // Fallback
+    }
+  }
+
+  async function handleSavePin() {
+    if (!/^\d{4}$/.test(newPin)) {
+      setPinError('PIN must be exactly 4 digits');
+      return;
+    }
+    if (newPin !== confirmNewPin) {
+      setPinError('PIN confirmation does not match');
+      return;
+    }
+    try {
+      const hash = await hashPasscode(newPin);
+      await settingsRepo.set('passcodeHash', hash);
+      await settingsRepo.set('lockEnabled', true);
+      setHasPasscode(true);
+      setShowPinSetup(false);
+      setNewPin('');
+      setConfirmNewPin('');
+      setPinError('');
+      onShowToast('4-digit PIN security activated');
+    } catch {
+      setPinError('Failed to save PIN');
+    }
+  }
+
+  async function handleDisablePin() {
+    triggerHaptic();
+    await settingsRepo.set('passcodeHash', null);
+    await settingsRepo.set('lockEnabled', false);
+    await settingsRepo.set('biometricEnabled', false);
+    setHasPasscode(false);
+    setBiometricActive(false);
+    onShowToast('PIN lock turned off');
+  }
+
+  async function handleToggleBiometric(val: boolean) {
+    triggerHaptic();
+    await settingsRepo.set('biometricEnabled', val);
+    setBiometricActive(val);
+    onShowToast(val ? 'Biometrics activated' : 'Biometrics deactivated');
+  }
 
   async function loadData() {
     setLoading(true);
@@ -220,7 +302,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
     if (n.includes('rent') || n.includes('housing') || n.includes('util')) return <Home className="w-4 h-4 text-orange-700" />;
     if (n.includes('shop') || n.includes('market')) return <ShoppingBag className="w-4 h-4 text-rose-700" />;
     if (n.includes('health') || n.includes('medical')) return <HeartPulse className="w-4 h-4 text-emerald-700" />;
-    if (n.includes('freelance') || n.includes('gig') || n.includes('salary') || n.includes('sale')) return <Briefcase className="w-4 h-4 text-emerald-700" />;
+    if (n.includes('salary') || n.includes('stipend') || n.includes('freelance') || n.includes('gig') || n.includes('sale')) return <Briefcase className="w-4 h-4 text-emerald-700" />;
     if (n.includes('gift') || n.includes('remittance')) return <Gift className="w-4 h-4 text-pink-700" />;
     return <HelpCircle className="w-4 h-4 text-slate-500" />;
   }
@@ -287,15 +369,37 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </div>
         </div>
 
-        {/* Top Right Settings Button */}
-        <button
-          type="button"
-          onClick={() => setShowSettingsModal(true)}
-          aria-label="Settings and liquid asset calibration"
-          className="w-10 h-10 rounded-2xl bg-surface-container-low hover:bg-surface-container text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-all shadow-xs"
-        >
-          <Settings className="w-5 h-5" />
-        </button>
+        {/* Top Right Actions: Dark/Light Mode + Settings */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic();
+              toggleTheme();
+            }}
+            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            className="w-10 h-10 rounded-2xl bg-surface-container-low hover:bg-surface-container text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-all shadow-xs"
+          >
+            {theme === 'dark' ? (
+              <Sun className="w-5 h-5 text-amber-400" />
+            ) : (
+              <Moon className="w-5 h-5 text-slate-700" />
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic();
+              loadSecuritySettings();
+              setShowSettingsModal(true);
+            }}
+            aria-label="Settings and security"
+            className="w-10 h-10 rounded-2xl bg-surface-container-low hover:bg-surface-container text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-all shadow-xs"
+          >
+            <Settings className="w-5 h-5" />
+          </button>
+        </div>
       </header>
 
       {/* Hero Card: Total Liquid Balance & Inflow / Outflow */}
@@ -687,7 +791,171 @@ export const HomeView: React.FC<HomeViewProps> = ({
               </button>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3 max-h-[75vh] overflow-y-auto pr-1">
+              {/* Appearance Mode Toggle */}
+              <div className="p-3.5 rounded-2xl bg-surface-container-low flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-surface-container-lowest text-amber-500 flex items-center justify-center shadow-xs">
+                    {theme === 'dark' ? (
+                      <Sun className="w-4 h-4 text-amber-400" />
+                    ) : (
+                      <Moon className="w-4 h-4 text-slate-700" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-primary dark:text-white">
+                      Appearance
+                    </p>
+                    <p className="text-[10px] text-on-surface-variant">
+                      {theme === 'dark' ? 'Dark theme enabled' : 'Light theme enabled'}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic();
+                    toggleTheme();
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-surface-container-lowest text-xs font-bold text-primary dark:text-white border border-outline-variant/30 hover:bg-surface-container transition-colors"
+                >
+                  {theme === 'dark' ? 'Light' : 'Dark'}
+                </button>
+              </div>
+
+              {/* Security Section */}
+              <div className="p-3.5 rounded-2xl bg-surface-container-low space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-surface-container-lowest text-secondary flex items-center justify-center shadow-xs">
+                      <Lock className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-primary dark:text-white">
+                        4-Digit PIN Security
+                      </p>
+                      <p className="text-[10px] text-on-surface-variant">
+                        {hasPasscode ? 'Active & Protecting app' : 'Optional passcode protection'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {!showPinSetup && (
+                    hasPasscode ? (
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            triggerHaptic();
+                            setShowPinSetup(true);
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-surface-container-lowest text-[11px] font-semibold text-secondary hover:bg-surface-container"
+                        >
+                          Change
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleDisablePin}
+                          className="px-2.5 py-1 rounded-lg bg-red-50 text-[11px] font-semibold text-red-600 hover:bg-red-100"
+                        >
+                          Disable
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          triggerHaptic();
+                          setShowPinSetup(true);
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-primary text-white text-xs font-bold shadow-xs active:scale-95"
+                      >
+                        Set Up
+                      </button>
+                    )
+                  )}
+                </div>
+
+                {/* Inline PIN setup form */}
+                {showPinSetup && (
+                  <div className="pt-3 border-t border-outline-variant/20 space-y-2.5 animate-in fade-in duration-150">
+                    <p className="text-[11px] font-semibold text-primary dark:text-white">
+                      {hasPasscode ? 'Enter New 4-Digit PIN' : 'Create 4-Digit PIN'}
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        type="password"
+                        inputMode="numeric"
+                        maxLength={4}
+                        placeholder="PIN"
+                        value={newPin}
+                        onChange={(e) => setNewPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                        className="w-full px-3 py-2 rounded-xl bg-surface-container-lowest border border-outline-variant/30 text-center tracking-widest text-xs font-bold text-primary dark:text-white focus:outline-none"
+                      />
+                      <input
+                        type="password"
+                        inputMode="numeric"
+                        maxLength={4}
+                        placeholder="Confirm"
+                        value={confirmNewPin}
+                        onChange={(e) => setConfirmNewPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                        className="w-full px-3 py-2 rounded-xl bg-surface-container-lowest border border-outline-variant/30 text-center tracking-widest text-xs font-bold text-primary dark:text-white focus:outline-none"
+                      />
+                    </div>
+
+                    {pinError && (
+                      <p className="text-[10px] text-red-600 font-medium">{pinError}</p>
+                    )}
+
+                    <div className="flex items-center justify-end gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowPinSetup(false);
+                          setNewPin('');
+                          setConfirmNewPin('');
+                          setPinError('');
+                        }}
+                        className="px-3 py-1.5 rounded-xl text-xs font-medium text-on-surface-variant hover:text-on-surface"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSavePin}
+                        className="px-4 py-1.5 rounded-xl bg-primary text-white text-xs font-bold shadow-xs flex items-center gap-1"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                        Save PIN
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Biometrics Toggle */}
+                {biometricsAvailable && (
+                  <div className="pt-2 border-t border-outline-variant/20 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Fingerprint className="w-4 h-4 text-secondary" />
+                      <span className="text-xs font-semibold text-primary dark:text-white">
+                        Biometrics (Fingerprint / Face)
+                      </span>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={biometricActive}
+                        onChange={(e) => handleToggleBiometric(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-8 h-4 bg-surface-container-high peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-secondary"></div>
+                    </label>
+                  </div>
+                )}
+              </div>
+
+              {/* Calibrate Liquid Money */}
               <button
                 type="button"
                 onClick={() => {
@@ -709,6 +977,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 </div>
               </button>
 
+              {/* Clear All Data */}
               <button
                 type="button"
                 onClick={() => setShowResetConfirm(true)}

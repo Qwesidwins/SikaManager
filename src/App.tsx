@@ -1,13 +1,28 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { seedInitialDataIfNeeded } from '@/db/seed';
 import { settingsRepo } from '@/db/repositories/settingsRepo';
+import { useTheme } from '@/lib/theme';
+import { LaunchScreen } from '@/features/simpleMvp/LaunchScreen';
+import { LockScreen } from '@/features/lock/LockScreen';
 import { HomeView } from '@/features/simpleMvp/HomeView';
 import { InsightsView } from '@/features/simpleMvp/InsightsView';
 import { AddTransactionModal } from '@/features/simpleMvp/AddTransactionModal';
 import { LiquidOnboardingModal } from '@/features/simpleMvp/LiquidOnboardingModal';
 import { BottomNav, type MvpTab } from '@/features/simpleMvp/BottomNav';
 
-export default function App(): React.ReactElement {
+interface AppProps {
+  skipLaunchScreen?: boolean;
+}
+
+export default function App({
+  skipLaunchScreen = process.env.NODE_ENV === 'test',
+}: AppProps = {}): React.ReactElement {
+  useTheme(); // Initialize and bind theme
+  const [showLaunchScreen, setShowLaunchScreen] = useState(!skipLaunchScreen);
+  const [isLocked, setIsLocked] = useState(false);
+  const [passcodeHash, setPasscodeHash] = useState<string | null>(null);
+  const [biometricEnabled, setBiometricEnabled] = useState(false);
+
   const [currentTab, setCurrentTab] = useState<MvpTab>('home');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
@@ -19,6 +34,17 @@ export default function App(): React.ReactElement {
     async function init() {
       try {
         await seedInitialDataIfNeeded();
+
+        // Check lock & passcode protection
+        const lockEnabled = await settingsRepo.get('lockEnabled');
+        const hash = await settingsRepo.get('passcodeHash');
+        const bio = await settingsRepo.get('biometricEnabled');
+        if (lockEnabled && hash) {
+          setIsLocked(true);
+          setPasscodeHash(hash);
+          setBiometricEnabled(Boolean(bio));
+        }
+
         const done = await settingsRepo.get('onboardingDone');
         if (!done) {
           setIsOnboardingOpen(true);
@@ -56,11 +82,28 @@ export default function App(): React.ReactElement {
     [showToast]
   );
 
+  // 1. Launch / Splash animation screen
+  if (showLaunchScreen) {
+    return <LaunchScreen onFinish={() => setShowLaunchScreen(false)} />;
+  }
+
+  // 2. Loading state during initialization
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface">
         <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
       </div>
+    );
+  }
+
+  // 3. Security lock screen
+  if (isLocked && passcodeHash) {
+    return (
+      <LockScreen
+        passcodeHash={passcodeHash}
+        biometricEnabled={biometricEnabled}
+        onUnlock={() => setIsLocked(false)}
+      />
     );
   }
 

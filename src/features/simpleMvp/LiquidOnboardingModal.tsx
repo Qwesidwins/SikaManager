@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { accountsRepo } from '@/db/repositories/accountsRepo';
 import { settingsRepo } from '@/db/repositories/settingsRepo';
+import { hashPasscode } from '@/crypto/passcode';
 import { parseAmountInput, formatMinor } from '@/domain/money';
 import { triggerHaptic } from '@/lib/haptics';
 import type { Account, AccountType } from '@/domain/types';
@@ -16,6 +17,8 @@ import {
   Sparkles,
   HelpCircle,
   X,
+  Lock,
+  Fingerprint,
 } from 'lucide-react';
 
 interface LiquidOnboardingModalProps {
@@ -41,6 +44,13 @@ export const LiquidOnboardingModal: React.FC<LiquidOnboardingModalProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  // Optional Security setup
+  const [enableSecurity, setEnableSecurity] = useState(false);
+  const [pin, setPin] = useState('');
+  const [confirmPin, setConfirmPin] = useState('');
+  const [enableBiometric, setEnableBiometric] = useState(false);
+  const [biometricSupported, setBiometricSupported] = useState(false);
+
   // Custom asset creation form
   const [showAddCustom, setShowAddCustom] = useState(false);
   const [customName, setCustomName] = useState('');
@@ -50,8 +60,24 @@ export const LiquidOnboardingModal: React.FC<LiquidOnboardingModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       loadInitialAccounts();
+      checkBiometricSupport();
     }
   }, [isOpen]);
+
+  async function checkBiometricSupport() {
+    if (
+      typeof window !== 'undefined' &&
+      window.PublicKeyCredential &&
+      typeof window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === 'function'
+    ) {
+      try {
+        const available = await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        setBiometricSupported(available);
+      } catch {
+        setBiometricSupported(false);
+      }
+    }
+  }
 
   async function loadInitialAccounts() {
     try {
@@ -131,6 +157,19 @@ export const LiquidOnboardingModal: React.FC<LiquidOnboardingModalProps> = ({
     triggerHaptic();
 
     try {
+      if (enableSecurity) {
+        if (!/^\d{4}$/.test(pin)) {
+          setErrorMsg('Passcode must be exactly 4 digits');
+          setIsSaving(false);
+          return;
+        }
+        if (pin !== confirmPin) {
+          setErrorMsg('PIN confirmation does not match');
+          setIsSaving(false);
+          return;
+        }
+      }
+
       for (const draft of drafts) {
         let openingMinor = 0;
         if (draft.balanceStr.trim()) {
@@ -154,8 +193,15 @@ export const LiquidOnboardingModal: React.FC<LiquidOnboardingModalProps> = ({
         await accountsRepo.create(accountToSave);
       }
 
+      if (enableSecurity) {
+        const passcodeHash = await hashPasscode(pin);
+        await settingsRepo.set('passcodeHash', passcodeHash);
+        await settingsRepo.set('lockEnabled', true);
+        await settingsRepo.set('biometricEnabled', enableBiometric);
+      }
+
       await settingsRepo.set('onboardingDone', true);
-      onCompleted('Liquid assets calibrated successfully');
+      onCompleted(enableSecurity ? 'Assets & Passcode secured successfully' : 'Liquid assets calibrated successfully');
       onClose();
     } catch (err: unknown) {
       setErrorMsg((err as Error).message || 'Failed to save liquid assets');
@@ -351,6 +397,102 @@ export const LiquidOnboardingModal: React.FC<LiquidOnboardingModalProps> = ({
               <span>Add another asset (Stocks, another MoMo, Bank)</span>
             </button>
           )}
+
+          {/* Optional App Security (PIN & Biometrics) */}
+          <div className="p-4 rounded-2xl bg-surface-container-low/50 border border-outline-variant/30 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-surface-container-lowest text-primary flex items-center justify-center shadow-xs">
+                  <Lock className="w-4 h-4 text-secondary" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-primary dark:text-white">
+                    App Security (Optional)
+                  </p>
+                  <p className="text-[10px] text-on-surface-variant">
+                    Protect with 4-digit PIN or biometrics
+                  </p>
+                </div>
+              </div>
+
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={enableSecurity}
+                  onChange={(e) => {
+                    triggerHaptic();
+                    setEnableSecurity(e.target.checked);
+                  }}
+                  className="sr-only peer"
+                />
+                <div className="w-10 h-5 bg-surface-container-high peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-secondary"></div>
+              </label>
+            </div>
+
+            {enableSecurity && (
+              <div className="pt-2 border-t border-outline-variant/20 space-y-3 animate-in fade-in duration-200">
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[10px] font-semibold text-on-surface-variant block mb-1">
+                      4-Digit PIN
+                    </label>
+                    <input
+                      type="password"
+                      inputMode="numeric"
+                      maxLength={4}
+                      placeholder="••••"
+                      value={pin}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '').slice(0, 4);
+                        setPin(val);
+                      }}
+                      className="w-full px-3 py-2 rounded-xl bg-surface-container-lowest border border-outline-variant/30 text-center tracking-widest text-sm font-bold text-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-secondary/40"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-semibold text-on-surface-variant block mb-1">
+                      Confirm PIN
+                    </label>
+                    <input
+                      type="password"
+                      inputMode="numeric"
+                      maxLength={4}
+                      placeholder="••••"
+                      value={confirmPin}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '').slice(0, 4);
+                        setConfirmPin(val);
+                      }}
+                      className="w-full px-3 py-2 rounded-xl bg-surface-container-lowest border border-outline-variant/30 text-center tracking-widest text-sm font-bold text-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-secondary/40"
+                    />
+                  </div>
+                </div>
+
+                {biometricSupported && (
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-surface-container-lowest border border-outline-variant/20">
+                    <div className="flex items-center gap-2">
+                      <Fingerprint className="w-4 h-4 text-secondary" />
+                      <span className="text-xs font-semibold text-primary dark:text-white">
+                        Enable Biometrics (Face/Fingerprint)
+                      </span>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={enableBiometric}
+                        onChange={(e) => {
+                          triggerHaptic();
+                          setEnableBiometric(e.target.checked);
+                        }}
+                        className="sr-only peer"
+                      />
+                      <div className="w-8 h-4 bg-surface-container-high peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-secondary"></div>
+                    </label>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           {errorMsg && (
             <div className="p-3 rounded-xl bg-red-50 text-red-600 text-xs font-medium">

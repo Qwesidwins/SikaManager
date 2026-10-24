@@ -175,7 +175,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
     if (n.includes('rent') || n.includes('util') || n.includes('housing')) return <Home className="w-3.5 h-3.5" />;
     if (n.includes('shop')) return <ShoppingBag className="w-3.5 h-3.5" />;
     if (n.includes('health')) return <HeartPulse className="w-3.5 h-3.5" />;
-    if (n.includes('freelance') || n.includes('gig') || n.includes('sale') || n.includes('trade')) return <Briefcase className="w-3.5 h-3.5" />;
+    if (n.includes('salary') || n.includes('stipend') || n.includes('freelance') || n.includes('gig') || n.includes('sale') || n.includes('trade')) return <Briefcase className="w-3.5 h-3.5" />;
     if (n.includes('gift')) return <Gift className="w-3.5 h-3.5" />;
     return <HelpCircle className="w-3.5 h-3.5" />;
   }

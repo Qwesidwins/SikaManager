@@ -92,8 +92,8 @@ export const DEFAULT_CATEGORIES: Omit<Category, 'createdAt' | 'updatedAt'>[] = [
   // Income Categories
   {
     id: 'cat-income-freelance',
-    name: 'Freelance & Gigs',
-    icon: 'work',
+    name: 'Salary & Stipends',
+    icon: 'payments',
     color: '#2E7D5B',
     kind: 'income',
     sortOrder: 9,
@@ -187,6 +187,12 @@ export async function seedInitialDataIfNeeded(): Promise<void> {
       updatedAt: now,
     }));
     await db.accounts.bulkAdd(fullAccounts);
+  }
+
+  // Migrate any previous 'Freelance & Gigs' to 'Salary & Stipends'
+  const oldFreelance = await db.categories.get('cat-income-freelance');
+  if (oldFreelance && oldFreelance.name !== 'Salary & Stipends') {
+    await db.categories.update('cat-income-freelance', { name: 'Salary & Stipends' });
   }
 
   // Ensure default settings exist
