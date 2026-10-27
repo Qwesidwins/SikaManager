@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { seedInitialDataIfNeeded } from '@/db/seed';
 import { settingsRepo } from '@/db/repositories/settingsRepo';
-import { applyLightMode } from '@/lib/theme';
+import { useTheme } from '@/lib/theme';
 import { LaunchScreen } from '@/features/simpleMvp/LaunchScreen';
 import { LockScreen } from '@/features/lock/LockScreen';
 import { HomeView } from '@/features/simpleMvp/HomeView';
@@ -18,8 +18,9 @@ interface AppProps {
 export default function App({
   skipLaunchScreen = process.env.NODE_ENV === 'test',
 }: AppProps = {}): React.ReactElement {
+  useTheme(); // Initialize and bind theme to html.dark
+
   useEffect(() => {
-    applyLightMode();
     // Check URL shortcuts when opened from home screen long-press
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -123,7 +124,7 @@ export default function App({
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-surface text-on-surface font-body-md antialiased selection:bg-secondary-container selection:text-on-secondary-container">
+    <div className="min-h-screen flex flex-col bg-surface dark:bg-[#070d1a] text-on-surface dark:text-slate-100 font-body-md antialiased selection:bg-secondary-container selection:text-on-secondary-container">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-4 inset-x-4 z-50 max-w-sm mx-auto bg-primary text-white py-2.5 px-4 rounded-2xl shadow-xl flex items-center justify-center text-xs font-semibold animate-in slide-in-from-top-4 duration-200 border border-outline-variant/30">

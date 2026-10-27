@@ -199,15 +199,15 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
-      <div className="bg-surface-container-lowest dark:bg-slate-900 w-full max-w-lg rounded-t-[28px] sm:rounded-[28px] shadow-2xl border border-outline-variant/30 p-6 max-h-[92vh] overflow-y-auto relative">
+      <div className="bg-surface-container-lowest dark:bg-slate-900 w-full max-w-lg rounded-t-[28px] sm:rounded-[28px] shadow-2xl border border-outline-variant/30 dark:border-slate-800 p-6 max-h-[92vh] overflow-y-auto relative">
         {/* Drag handle for mobile */}
-        <div className="w-12 h-1.5 bg-outline-variant/60 rounded-full mx-auto -mt-1 mb-4 sm:hidden"></div>
+        <div className="w-12 h-1.5 bg-outline-variant/60 dark:bg-slate-700 rounded-full mx-auto -mt-1 mb-4 sm:hidden"></div>
 
         {step === 'input' ? (
           /* STEP 1: Enter Amount & Details */
           <div className="space-y-4 animate-in fade-in duration-150">
             {/* Modal Header */}
-            <div className="flex items-center justify-between pb-2 border-b border-outline-variant/20">
+            <div className="flex items-center justify-between pb-2 border-b border-outline-variant/20 dark:border-slate-800">
               <h2 className="text-xl font-bold text-primary dark:text-white">
                 {type === 'income' ? 'Add Income' : 'Add Expense'}
               </h2>
@@ -215,7 +215,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                 type="button"
                 onClick={onClose}
                 aria-label="Close"
-                className="w-9 h-9 rounded-full bg-surface-container-low text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors"
+                className="w-9 h-9 rounded-full bg-surface-container-low dark:bg-slate-800 text-on-surface-variant dark:text-slate-300 hover:text-on-surface dark:hover:text-white flex items-center justify-center transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -223,7 +223,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
 
             <form onSubmit={handleProceedToAccountChoice} className="space-y-4 pt-1">
               {/* Segmented Type Toggle Pill */}
-              <div className="bg-surface-container-low p-1 rounded-full grid grid-cols-2 gap-1">
+              <div className="bg-surface-container-low dark:bg-slate-800/80 p-1 rounded-full grid grid-cols-2 gap-1 border border-outline-variant/10 dark:border-slate-700/60">
                 <button
                   type="button"
                   onClick={() => {
@@ -232,11 +232,11 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                   }}
                   className={`py-2 rounded-full font-semibold text-xs flex items-center justify-center gap-1.5 transition-all ${
                     type === 'expense'
-                      ? 'bg-primary text-white shadow-sm'
-                      : 'text-on-surface-variant hover:text-on-surface'
+                      ? 'bg-primary dark:bg-slate-700 text-white shadow-sm'
+                      : 'text-on-surface-variant dark:text-slate-400 hover:text-on-surface dark:hover:text-slate-200'
                   }`}
                 >
-                  <ArrowUpRight className="w-3.5 h-3.5 text-red-400" />
+                  <ArrowUpRight className="w-3.5 h-3.5 text-red-500 dark:text-red-400" />
                   <span>Expense</span>
                 </button>
                 <button
@@ -247,22 +247,22 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                   }}
                   className={`py-2 rounded-full font-semibold text-xs flex items-center justify-center gap-1.5 transition-all ${
                     type === 'income'
-                      ? 'bg-primary text-white shadow-sm'
-                      : 'text-on-surface-variant hover:text-on-surface'
+                      ? 'bg-primary dark:bg-slate-700 text-white shadow-sm'
+                      : 'text-on-surface-variant dark:text-slate-400 hover:text-on-surface dark:hover:text-slate-200'
                   }`}
                 >
-                  <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-400" />
+                  <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
                   <span>Income</span>
                 </button>
               </div>
 
               {/* Large Hero Amount Input */}
-              <div className="flex flex-col items-center justify-center py-4 bg-surface-container-low/50 rounded-2xl border border-outline-variant/20">
-                <span className="text-[11px] uppercase tracking-wider text-on-surface-variant font-medium mb-1">
+              <div className="flex flex-col items-center justify-center py-4 bg-surface-container-low/50 dark:bg-slate-800/50 rounded-2xl border border-outline-variant/20 dark:border-slate-800">
+                <span className="text-[11px] uppercase tracking-wider text-on-surface-variant dark:text-slate-400 font-medium mb-1">
                   Amount ({type.toUpperCase()})
                 </span>
                 <div className="flex items-baseline justify-center gap-2">
-                  <span className="text-2xl font-bold text-secondary">
+                  <span className="text-2xl font-bold text-secondary dark:text-[#ffc657]">
                     GH₵
                   </span>
                   <input
@@ -272,7 +272,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                     placeholder="0.00"
                     value={amountStr}
                     onChange={(e) => setAmountStr(e.target.value)}
-                    className="w-48 text-3xl sm:text-4xl font-extrabold tracking-tight text-center bg-transparent text-primary dark:text-white placeholder:text-outline focus:outline-none"
+                    className="w-48 text-3xl sm:text-4xl font-extrabold tracking-tight text-center bg-transparent text-primary dark:text-white placeholder:text-outline dark:placeholder:text-slate-600 focus:outline-none"
                   />
                 </div>
               </div>
@@ -287,13 +287,13 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                   placeholder="Lunch, Uber, Project fee, Auntie Muni, Shell station..."
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low text-xs font-medium text-on-surface border border-outline-variant/20 placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-secondary/40"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low dark:bg-slate-800 text-xs font-medium text-on-surface dark:text-white border border-outline-variant/20 dark:border-slate-700 placeholder:text-outline dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-secondary/40"
                 />
               </div>
 
               {/* Category Chips Scroll Carousel */}
               <div>
-                <label className="block text-[11px] font-semibold text-on-surface-variant mb-1.5">
+                <label className="block text-[11px] font-semibold text-on-surface-variant dark:text-slate-400 mb-1.5">
                   Quick Category Chips
                 </label>
                 <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
@@ -309,8 +309,8 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                         }}
                         className={`shrink-0 h-[34px] px-3 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 ${
                           isSelected
-                            ? 'bg-primary text-white shadow-sm'
-                            : 'bg-surface-container-low text-on-surface hover:bg-surface-container'
+                            ? 'bg-primary dark:bg-amber-400/20 dark:text-[#ffc657] dark:border dark:border-amber-400/50 text-white shadow-sm'
+                            : 'bg-surface-container-low dark:bg-slate-800 text-on-surface dark:text-slate-300 hover:bg-surface-container dark:hover:bg-slate-700 border border-transparent dark:border-slate-700/60'
                         }`}
                       >
                         {getChipIcon(cat.name)}
@@ -327,12 +327,12 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                   Date
                 </label>
                 <div className="relative">
-                  <Calendar className="w-4 h-4 text-outline absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <Calendar className="w-4 h-4 text-outline dark:text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-surface-container-low text-xs font-medium text-on-surface border border-outline-variant/20 focus:outline-none focus:ring-2 focus:ring-secondary/40"
+                    className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-surface-container-low dark:bg-slate-800 text-xs font-medium text-on-surface dark:text-white border border-outline-variant/20 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-secondary/40"
                   />
                 </div>
               </div>
@@ -347,7 +347,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
               {/* Submit Button -> Transitions to Pop-Up */}
               <button
                 type="submit"
-                className="w-full py-3.5 px-4 rounded-2xl bg-primary hover:bg-primary-container active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition-all"
+                className="w-full py-3.5 px-4 rounded-2xl bg-primary dark:bg-[#ffc657] hover:bg-primary-container dark:hover:bg-[#f5bd50] active:scale-[0.99] text-white dark:text-slate-950 font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition-all"
               >
                 <span>{type === 'expense' ? 'Save Expense' : 'Save Income'}</span>
                 <ArrowRight className="w-4 h-4" />
@@ -358,11 +358,11 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
           /* STEP 2: Dedicated Pop-up asking where money is deducted/debited from */
           <div className="animate-in fade-in slide-in-from-right-4 duration-200 space-y-4">
             {/* Pop-up Navigation Header */}
-            <div className="flex items-center justify-between pb-2 border-b border-outline-variant/20">
+            <div className="flex items-center justify-between pb-2 border-b border-outline-variant/20 dark:border-slate-800">
               <button
                 type="button"
                 onClick={() => setStep('input')}
-                className="text-xs font-semibold text-secondary hover:underline flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-surface-container-low transition-colors"
+                className="text-xs font-semibold text-secondary dark:text-[#ffc657] hover:underline flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-surface-container-low dark:hover:bg-slate-800 transition-colors"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Edit Amount (GH₵ {amountStr})</span>
@@ -372,7 +372,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                 type="button"
                 onClick={onClose}
                 aria-label="Close"
-                className="w-8 h-8 rounded-full bg-surface-container-low text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors"
+                className="w-8 h-8 rounded-full bg-surface-container-low dark:bg-slate-800 text-on-surface-variant dark:text-slate-300 hover:text-on-surface dark:hover:text-white flex items-center justify-center transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -398,7 +398,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                   ? `Where are you taking this GH₵ ${amountStr} from?`
                   : `Where are you depositing this GH₵ ${amountStr} into?`}
               </h3>
-              <p className="text-xs text-on-surface-variant">
+              <p className="text-xs text-on-surface-variant dark:text-slate-400">
                 Strictly choose from your listed liquid assets:
               </p>
             </div>
@@ -416,26 +416,26 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                     aria-label={`Select account ${acc.name}`}
                     onClick={() => handleConfirmSaveWithAccount(acc.id)}
                     disabled={isSubmitting}
-                    className="w-full p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30 hover:border-primary hover:bg-surface-container flex items-center justify-between gap-3 transition-all active:scale-[0.99] group shadow-xs hover:shadow-md text-left disabled:opacity-50"
+                    className="w-full p-4 rounded-2xl bg-surface-container-low dark:bg-slate-800/80 border border-outline-variant/30 dark:border-slate-700 hover:border-primary dark:hover:border-amber-400/60 hover:bg-surface-container dark:hover:bg-slate-800 flex items-center justify-between gap-3 transition-all active:scale-[0.99] group shadow-xs hover:shadow-md text-left disabled:opacity-50"
                   >
                     <div className="flex items-center gap-3.5 min-w-0">
-                      <div className="w-11 h-11 rounded-2xl bg-surface-container-lowest flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform">
+                      <div className="w-11 h-11 rounded-2xl bg-surface-container-lowest dark:bg-slate-900 flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform">
                         {getAccountBadgeIcon(acc.type)}
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-bold text-primary dark:text-white truncate">
                           {acc.name}
                         </p>
-                        <p className="text-xs text-on-surface-variant tabular-nums">
+                        <p className="text-xs text-on-surface-variant dark:text-slate-400 tabular-nums">
                           Available: {formatMinor(bal, 'GHS')}
                         </p>
-                        <p className="text-[11px] font-semibold text-secondary tabular-nums mt-0.5">
+                        <p className="text-[11px] font-semibold text-secondary dark:text-[#ffc657] tabular-nums mt-0.5">
                           After: {formatMinor(afterBal, 'GHS')}
                         </p>
                       </div>
                     </div>
 
-                    <div className="px-3.5 py-2 rounded-xl bg-primary text-white text-xs font-bold shrink-0 shadow-xs group-hover:bg-primary-container transition-colors">
+                    <div className="px-3.5 py-2 rounded-xl bg-primary dark:bg-[#ffc657] text-white dark:text-slate-950 text-xs font-bold shrink-0 shadow-xs group-hover:bg-primary-container dark:group-hover:bg-[#f5bd50] transition-colors">
                       {type === 'expense' ? 'Deduct' : 'Deposit'}
                     </div>
                   </button>

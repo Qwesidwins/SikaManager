@@ -9,7 +9,7 @@ import { seedInitialDataIfNeeded } from '@/db/seed';
 import { formatMinor } from '@/domain/money';
 import { accountBalance } from '@/domain/balance';
 import { triggerHaptic } from '@/lib/haptics';
-import { FinanceWidgetCard } from './FinanceWidgetCard';
+import { useTheme } from '@/lib/theme';
 import type { Transaction, Category, TransactionType, Account } from '@/domain/types';
 import {
   Wallet,
@@ -42,6 +42,8 @@ import {
   Fingerprint,
   Check,
   Download,
+  Sun,
+  Moon,
 } from 'lucide-react';
 
 interface HomeViewProps {
@@ -82,6 +84,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showInstallGuide, setShowInstallGuide] = useState(false);
+
+  // Theme
+  const { theme, toggleTheme } = useTheme();
 
   // Security settings
   const [hasPasscode, setHasPasscode] = useState(false);
@@ -366,30 +371,48 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </div>
         </div>
 
-        {/* Top Right Action: Settings */}
-        <button
-          type="button"
-          onClick={() => {
-            triggerHaptic();
-            loadSecuritySettings();
-            setShowSettingsModal(true);
-          }}
-          aria-label="Settings and security"
-          className="w-10 h-10 rounded-2xl bg-surface-container-low hover:bg-surface-container text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-all shadow-xs"
-        >
-          <Settings className="w-5 h-5" />
-        </button>
+        {/* Top Right Actions: Dark/Light Mode + Settings */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic();
+              toggleTheme();
+            }}
+            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            className="w-10 h-10 rounded-2xl bg-surface-container-low dark:bg-slate-800 hover:bg-surface-container dark:hover:bg-slate-700 text-on-surface-variant dark:text-slate-300 flex items-center justify-center transition-all shadow-xs"
+          >
+            {theme === 'dark' ? (
+              <Sun className="w-5 h-5 text-amber-400" />
+            ) : (
+              <Moon className="w-5 h-5 text-slate-700" />
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic();
+              loadSecuritySettings();
+              setShowSettingsModal(true);
+            }}
+            aria-label="Settings and security"
+            className="w-10 h-10 rounded-2xl bg-surface-container-low dark:bg-slate-800 hover:bg-surface-container dark:hover:bg-slate-700 text-on-surface-variant dark:text-slate-300 flex items-center justify-center transition-all shadow-xs"
+          >
+            <Settings className="w-5 h-5" />
+          </button>
+        </div>
       </header>
 
       {/* Hero Card: Total Liquid Balance & Inflow / Outflow */}
-      <div className="relative overflow-hidden rounded-[24px] bg-surface-container-lowest p-6 shadow-[0_4px_24px_-2px_rgba(20,33,61,0.06),0_2px_8px_-1px_rgba(20,33,61,0.03)] border border-outline-variant/30">
+      <div className="relative overflow-hidden rounded-[24px] bg-surface-container-lowest dark:bg-slate-900 p-6 shadow-[0_4px_24px_-2px_rgba(20,33,61,0.06),0_2px_8px_-1px_rgba(20,33,61,0.03)] border border-outline-variant/30 dark:border-slate-800">
         <div className="relative z-10 flex flex-col space-y-4">
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-xs uppercase tracking-wider text-on-surface-variant font-medium">
+              <span className="text-xs uppercase tracking-wider text-on-surface-variant dark:text-slate-400 font-medium">
                 Total Balance
               </span>
-              <span className="text-[11px] text-on-surface-variant font-medium bg-surface-container-low px-2 py-0.5 rounded-full">
+              <span className="text-[11px] text-on-surface-variant dark:text-slate-300 font-medium bg-surface-container-low dark:bg-slate-800 px-2 py-0.5 rounded-full">
                 Liquid Money
               </span>
             </div>
@@ -404,13 +427,13 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </div>
 
           {/* Month Navigator Header Bar */}
-          <div className="flex items-center justify-between pt-1 pb-1 border-t border-outline-variant/20">
+          <div className="flex items-center justify-between pt-1 pb-1 border-t border-outline-variant/20 dark:border-slate-800">
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={handlePrevMonth}
                 aria-label="Previous month"
-                className="w-7 h-7 rounded-lg bg-surface-container-low text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors"
+                className="w-7 h-7 rounded-lg bg-surface-container-low dark:bg-slate-800 text-on-surface-variant dark:text-slate-300 hover:text-on-surface dark:hover:text-white flex items-center justify-center transition-colors"
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
               </button>
@@ -423,7 +446,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 onClick={handleNextMonth}
                 disabled={selectedMonth === 'all'}
                 aria-label="Next month"
-                className="w-7 h-7 rounded-lg bg-surface-container-low text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors disabled:opacity-40"
+                className="w-7 h-7 rounded-lg bg-surface-container-low dark:bg-slate-800 text-on-surface-variant dark:text-slate-300 hover:text-on-surface dark:hover:text-white flex items-center justify-center transition-colors disabled:opacity-40"
               >
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
@@ -442,25 +465,25 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
           {/* Sub-strip: Inflow and Outflow for Selected Period */}
           <div className="grid grid-cols-2 gap-3 pt-1">
-            <div className="flex items-center gap-2.5 p-2 rounded-xl bg-surface-container-low/60">
-              <div className="w-8 h-8 rounded-xl bg-tertiary-fixed/50 text-emerald-800 flex items-center justify-center shrink-0">
+            <div className="flex items-center gap-2.5 p-2 rounded-xl bg-surface-container-low/60 dark:bg-slate-800/80">
+              <div className="w-8 h-8 rounded-xl bg-tertiary-fixed/50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-400 flex items-center justify-center shrink-0">
                 <ArrowDownLeft className="w-4 h-4" />
               </div>
               <div className="min-w-0">
-                <p className="text-[11px] text-on-surface-variant font-medium">Total Inflow</p>
-                <p className="text-sm font-bold text-emerald-600 truncate">
+                <p className="text-[11px] text-on-surface-variant dark:text-slate-400 font-medium">Total Inflow</p>
+                <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 truncate">
                   +{formatMinor(totalIncomeMinor, 'GHS')}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2.5 p-2 rounded-xl bg-surface-container-low/60">
-              <div className="w-8 h-8 rounded-xl bg-red-100 dark:bg-red-950/60 text-red-700 flex items-center justify-center shrink-0">
+            <div className="flex items-center gap-2.5 p-2 rounded-xl bg-surface-container-low/60 dark:bg-slate-800/80">
+              <div className="w-8 h-8 rounded-xl bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-400 flex items-center justify-center shrink-0">
                 <ArrowUpRight className="w-4 h-4" />
               </div>
               <div className="min-w-0">
-                <p className="text-[11px] text-on-surface-variant font-medium">Total Outflow</p>
-                <p className="text-sm font-bold text-red-600 truncate">
+                <p className="text-[11px] text-on-surface-variant dark:text-slate-400 font-medium">Total Outflow</p>
+                <p className="text-sm font-bold text-red-600 dark:text-red-400 truncate">
                   -{formatMinor(totalExpenseMinor, 'GHS')}
                 </p>
               </div>
@@ -468,16 +491,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </div>
         </div>
       </div>
-
-      {/* Interactive Expandable/Contracted Live Widget Card */}
-      <FinanceWidgetCard
-        monthLabel={selectedMonth === 'all' ? 'All-Time' : formatMonthLabel(selectedMonth)}
-        transactions={monthTransactions}
-        accounts={accounts}
-        categories={categories}
-        totalIncomeMinor={totalIncomeMinor}
-        totalExpenseMinor={totalExpenseMinor}
-      />
 
       {/* Liquid Assets Dashboard Section */}
       <div className="space-y-2.5">
@@ -516,13 +529,13 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 className={`p-3 rounded-2xl border transition-all cursor-pointer relative group ${
                   isFilterActive
                     ? 'bg-primary text-white border-primary shadow-sm'
-                    : 'bg-surface-container-lowest border-outline-variant/30 hover:border-outline-variant/60 shadow-xs'
+                    : 'bg-surface-container-lowest dark:bg-slate-900 border-outline-variant/30 dark:border-slate-800 hover:border-outline-variant/60 shadow-xs'
                 }`}
               >
                 <div className="flex items-center justify-between mb-1.5">
                   <div
                     className={`w-7 h-7 rounded-lg flex items-center justify-center ${
-                      isFilterActive ? 'bg-white/20 text-white' : 'bg-surface-container-low'
+                      isFilterActive ? 'bg-white/20 text-white' : 'bg-surface-container-low dark:bg-slate-800'
                     }`}
                   >
                     {getAccountIcon(acc.type)}
@@ -539,7 +552,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     className={`w-6 h-6 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ${
                       isFilterActive
                         ? 'text-white/70 hover:text-white hover:bg-white/20'
-                        : 'text-outline hover:text-red-500 hover:bg-red-50'
+                        : 'text-outline dark:text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40'
                     }`}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -560,7 +573,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                       ? 'text-secondary-fixed'
                       : bal >= 0
                       ? 'text-primary dark:text-white'
-                      : 'text-red-500'
+                      : 'text-red-500 dark:text-red-400'
                   }`}
                 >
                   {formatMinor(bal, 'GHS')}
@@ -581,7 +594,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
       <div className="space-y-2 pt-1">
         <div className="flex items-center justify-between gap-2">
           {/* Segmented type filter */}
-          <div className="flex items-center p-1 bg-surface-container-low rounded-xl">
+          <div className="flex items-center p-1 bg-surface-container-low dark:bg-slate-800 rounded-xl">
             {(['all', 'expense', 'income'] as const).map((type) => (
               <button
                 key={type}
@@ -593,7 +606,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${
                   filterType === type
                     ? 'bg-primary text-white shadow-xs'
-                    : 'text-on-surface-variant hover:text-on-surface'
+                    : 'text-on-surface-variant dark:text-slate-400 hover:text-on-surface dark:hover:text-white'
                 }`}
               >
                 {type}
@@ -614,26 +627,26 @@ export const HomeView: React.FC<HomeViewProps> = ({
           )}
 
           {/* Transaction Count Indicator */}
-          <span className="text-xs font-medium text-on-surface-variant px-1">
+          <span className="text-xs font-medium text-on-surface-variant dark:text-slate-400 px-1">
             {filteredTransactions.length} {filteredTransactions.length === 1 ? 'entry' : 'entries'}
           </span>
         </div>
 
         {/* Search input */}
         <div className="relative">
-          <Search className="w-4 h-4 text-outline absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-outline dark:text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search notes, places, or categories..."
-            className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-surface-container-low text-on-surface text-xs placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-secondary/40 transition-all border border-transparent focus:border-outline-variant/30"
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-surface-container-low dark:bg-slate-800 text-on-surface dark:text-white text-xs placeholder:text-outline dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-secondary/40 transition-all border border-transparent dark:border-slate-700"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-outline hover:text-on-surface"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-outline dark:text-slate-400 hover:text-on-surface dark:hover:text-white"
             >
               Clear
             </button>
@@ -649,13 +662,13 @@ export const HomeView: React.FC<HomeViewProps> = ({
             <p className="text-xs">Loading ledger...</p>
           </div>
         ) : filteredTransactions.length === 0 ? (
-          <div className="py-14 px-4 text-center rounded-[24px] bg-surface-container-lowest border border-dashed border-outline-variant/40 space-y-3">
-            <div className="w-12 h-12 rounded-2xl bg-surface-container-low text-secondary flex items-center justify-center mx-auto">
+          <div className="py-14 px-4 text-center rounded-[24px] bg-surface-container-lowest dark:bg-slate-900 border border-dashed border-outline-variant/40 dark:border-slate-800 space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-surface-container-low dark:bg-slate-800 text-secondary flex items-center justify-center mx-auto">
               <Wallet className="w-6 h-6" />
             </div>
             <div>
               <p className="text-sm font-semibold text-primary dark:text-white">No transactions found</p>
-              <p className="text-xs text-on-surface-variant mt-1 max-w-xs mx-auto">
+              <p className="text-xs text-on-surface-variant dark:text-slate-400 mt-1 max-w-xs mx-auto">
                 {searchQuery || filterType !== 'all' || selectedAccountFilter || selectedMonth !== 'all'
                   ? 'No entries match your search, month, and account filters.'
                   : 'Your ledger is clean. Tap "+ Add" below to log your first income or expense.'}
@@ -673,7 +686,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             )}
           </div>
         ) : (
-          <div className="rounded-[20px] bg-surface-container-lowest border border-outline-variant/20 shadow-sm overflow-hidden divide-y divide-outline-variant/15">
+          <div className="rounded-[20px] bg-surface-container-lowest dark:bg-slate-900 border border-outline-variant/20 dark:border-slate-800 shadow-sm overflow-hidden divide-y divide-outline-variant/15 dark:divide-slate-800">
             {filteredTransactions.map((tx) => {
               const category = tx.categoryId ? categoryMap.get(tx.categoryId) : undefined;
               const account = accountMap.get(tx.accountId);
@@ -685,17 +698,17 @@ export const HomeView: React.FC<HomeViewProps> = ({
               return (
                 <div
                   key={tx.id}
-                  className="p-3.5 flex items-center justify-between hover:bg-surface-container-low/40 transition-colors group"
+                  className="p-3.5 flex items-center justify-between hover:bg-surface-container-low/40 dark:hover:bg-slate-800/40 transition-colors group"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-surface-container-low flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-surface-container-low dark:bg-slate-800 flex items-center justify-center shrink-0">
                       {getCategoryIcon(category?.name)}
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-primary dark:text-white truncate">
                         {tx.note || category?.name || (tx.type === 'income' ? 'Income' : 'Expense')}
                       </p>
-                      <p className="text-xs text-on-surface-variant truncate">
+                      <p className="text-xs text-on-surface-variant dark:text-slate-400 truncate">
                         {account?.name || 'Cash'} · {category?.name || 'General'} · {formattedDate}
                       </p>
                     </div>
@@ -705,7 +718,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     <span
                       className={`text-sm font-bold tabular-nums ${
                         tx.type === 'income'
-                          ? 'text-emerald-600'
+                          ? 'text-emerald-600 dark:text-emerald-400'
                           : 'text-primary dark:text-white'
                       }`}
                     >
@@ -716,7 +729,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                       type="button"
                       onClick={() => handleDeleteTransaction(tx.id)}
                       aria-label="Delete entry"
-                      className="w-8 h-8 rounded-lg text-outline hover:text-red-500 hover:bg-red-50 flex items-center justify-center transition-colors opacity-70 group-hover:opacity-100"
+                      className="w-8 h-8 rounded-lg text-outline dark:text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 flex items-center justify-center transition-colors opacity-70 group-hover:opacity-100"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -731,15 +744,15 @@ export const HomeView: React.FC<HomeViewProps> = ({
       {/* Delete Account Confirmation Modal */}
       {accountToDelete && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-surface-container-lowest max-w-sm w-full rounded-3xl p-6 shadow-2xl border border-outline-variant/30 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+          <div className="bg-surface-container-lowest dark:bg-slate-900 max-w-sm w-full rounded-3xl p-6 shadow-2xl border border-outline-variant/30 dark:border-slate-800 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-950/60 text-red-600 flex items-center justify-center mx-auto">
               <AlertTriangle className="w-6 h-6" />
             </div>
             <div className="text-center space-y-1">
               <h3 className="text-base font-bold text-primary dark:text-white">
                 Delete {accountToDelete.name}?
               </h3>
-              <p className="text-xs text-on-surface-variant">
+              <p className="text-xs text-on-surface-variant dark:text-slate-400">
                 This will delete the account from your liquid assets. Existing transactions recorded to this account will remain in your activity log.
               </p>
             </div>
@@ -747,7 +760,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               <button
                 type="button"
                 onClick={() => setAccountToDelete(null)}
-                className="py-2.5 px-4 rounded-xl bg-surface-container-low text-xs font-semibold text-on-surface hover:bg-surface-container transition-colors"
+                className="py-2.5 px-4 rounded-xl bg-surface-container-low dark:bg-slate-800 text-xs font-semibold text-on-surface dark:text-slate-200 hover:bg-surface-container dark:hover:bg-slate-700 transition-colors"
               >
                 Cancel
               </button>
@@ -781,8 +794,40 @@ export const HomeView: React.FC<HomeViewProps> = ({
             </div>
 
             <div className="space-y-3 max-h-[75vh] overflow-y-auto pr-1">
+              {/* Appearance Mode Toggle */}
+              <div className="p-3.5 rounded-2xl bg-surface-container-low dark:bg-slate-800/80 border border-outline-variant/15 dark:border-slate-700/60 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-surface-container-lowest dark:bg-slate-900 text-amber-500 flex items-center justify-center shadow-xs">
+                    {theme === 'dark' ? (
+                      <Sun className="w-4 h-4 text-amber-400" />
+                    ) : (
+                      <Moon className="w-4 h-4 text-slate-700" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-primary dark:text-white">
+                      Appearance
+                    </p>
+                    <p className="text-[10px] text-on-surface-variant dark:text-slate-400">
+                      {theme === 'dark' ? 'Dark mode enabled' : 'Light mode enabled'}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic();
+                    toggleTheme();
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-surface-container-lowest dark:bg-slate-900 text-xs font-bold text-primary dark:text-white border border-outline-variant/30 dark:border-slate-700 hover:bg-surface-container dark:hover:bg-slate-800 transition-colors"
+                >
+                  {theme === 'dark' ? 'Light' : 'Dark'}
+                </button>
+              </div>
+
               {/* Security Section */}
-              <div className="p-3.5 rounded-2xl bg-surface-container-low space-y-3">
+              <div className="p-3.5 rounded-2xl bg-surface-container-low dark:bg-slate-800/80 border border-outline-variant/15 dark:border-slate-700/60 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-xl bg-surface-container-lowest text-secondary flex items-center justify-center shadow-xs">
@@ -1009,52 +1054,44 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </div>
       )}
 
-      {/* Install App & Home Screen Widget Guide Modal */}
+      {/* Install App & Home Screen Shortcuts Guide Modal */}
       {showInstallGuide && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-surface-container-lowest max-w-sm w-full rounded-3xl p-6 shadow-2xl border border-outline-variant/30 space-y-4 max-h-[85vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-2 border-b border-outline-variant/20">
+          <div className="bg-surface-container-lowest dark:bg-slate-900 max-w-sm w-full rounded-3xl p-6 shadow-2xl border border-outline-variant/30 dark:border-slate-800 space-y-4 max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-2 border-b border-outline-variant/20 dark:border-slate-800">
               <div className="flex items-center gap-2">
                 <Smartphone className="w-5 h-5 text-secondary" />
                 <h3 className="text-base font-bold text-primary dark:text-white">
-                  Phone Installation & Widgets
+                  Phone Installation & Shortcuts
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setShowInstallGuide(false)}
-                className="w-8 h-8 rounded-full bg-surface-container-low text-on-surface-variant hover:text-on-surface flex items-center justify-center"
+                className="w-8 h-8 rounded-full bg-surface-container-low dark:bg-slate-800 text-on-surface-variant dark:text-slate-300 hover:text-on-surface flex items-center justify-center"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="space-y-3 text-xs text-on-surface-variant">
+            <div className="space-y-3 text-xs text-on-surface-variant dark:text-slate-300">
               {/* Android Guide */}
-              <div className="p-3 rounded-2xl bg-surface-container-low space-y-1">
+              <div className="p-3 rounded-2xl bg-surface-container-low dark:bg-slate-800/80 border border-transparent dark:border-slate-700/50 space-y-1">
                 <p className="font-bold text-primary dark:text-white">On Android (Chrome / Edge)</p>
                 <p>1. Tap the three dots menu (⋮) in your browser.</p>
                 <p>2. Tap &quot;Install App&quot; or &quot;Add to Home screen&quot;.</p>
-                <p className="text-slate-500 pt-1">
+                <p className="text-slate-500 dark:text-slate-400 pt-1">
                   💡 Once installed, long-press the SikaManager icon on your home screen for quick shortcuts (Add Expense, Income, Insights).
                 </p>
               </div>
 
               {/* iOS Guide */}
-              <div className="p-3 rounded-2xl bg-surface-container-low space-y-1">
+              <div className="p-3 rounded-2xl bg-surface-container-low dark:bg-slate-800/80 border border-transparent dark:border-slate-700/50 space-y-1">
                 <p className="font-bold text-primary dark:text-white">On iPhone / iPad (Safari)</p>
                 <p>1. Tap the Share button at the bottom of Safari.</p>
                 <p>2. Scroll down and tap &quot;Add to Home Screen&quot;.</p>
-                <p className="text-slate-500 pt-1">
-                  💡 Apple iOS does not allow web browsers to install native WidgetKit widgets directly, but long-pressing the app icon provides instant actions.
-                </p>
-              </div>
-
-              {/* In-App Live Widget */}
-              <div className="p-3 rounded-2xl bg-amber-50/80 border border-amber-200/60 space-y-1 text-amber-900">
-                <p className="font-bold text-amber-950">Live Cashflow Widget</p>
-                <p>
-                  Use the live widget directly at the top of your SikaManager dashboard. Tap &quot;Expand&quot; to see full visual breakdowns of cashflow, or &quot;Contract&quot; for a compact glance!
+                <p className="text-slate-500 dark:text-slate-400 pt-1">
+                  💡 Once on your home screen, long-press the app icon anytime for instant actions!
                 </p>
               </div>
             </div>

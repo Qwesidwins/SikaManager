@@ -238,18 +238,18 @@ export const LiquidOnboardingModal: React.FC<LiquidOnboardingModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
-      <div className="bg-surface-container-lowest w-full max-w-lg rounded-t-[32px] sm:rounded-[32px] shadow-2xl border border-outline-variant/30 p-6 max-h-[92vh] flex flex-col">
+      <div className="bg-surface-container-lowest dark:bg-slate-900 w-full max-w-lg rounded-t-[32px] sm:rounded-[32px] shadow-2xl border border-outline-variant/30 dark:border-slate-800 p-6 max-h-[92vh] flex flex-col">
         {/* Top Header */}
         <div className="flex items-center justify-between pb-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-primary text-secondary-container flex items-center justify-center shadow-sm">
+            <div className="w-10 h-10 rounded-2xl bg-primary dark:bg-slate-800 text-secondary-container dark:text-[#ffc657] flex items-center justify-center shadow-sm">
               <Wallet className="w-5 h-5" />
             </div>
             <div>
               <h2 className="text-lg font-bold text-primary dark:text-white leading-tight">
                 Calibrate Liquid Assets
               </h2>
-              <p className="text-xs text-on-surface-variant">
+              <p className="text-xs text-on-surface-variant dark:text-slate-400">
                 Enter all money at hand, bank, momo & savings
               </p>
             </div>
@@ -258,26 +258,26 @@ export const LiquidOnboardingModal: React.FC<LiquidOnboardingModalProps> = ({
             type="button"
             onClick={handleSkip}
             aria-label="Skip onboarding"
-            className="w-8 h-8 rounded-full bg-surface-container-low text-on-surface-variant hover:text-on-surface flex items-center justify-center text-xs"
+            className="w-8 h-8 rounded-full bg-surface-container-low dark:bg-slate-800 text-on-surface-variant dark:text-slate-300 hover:text-on-surface dark:hover:text-white flex items-center justify-center text-xs transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Total Liquid Summary Banner */}
-        <div className="my-3 p-4 rounded-2xl bg-surface-container-low/80 border border-outline-variant/20 flex items-center justify-between">
+        <div className="my-3 p-4 rounded-2xl bg-surface-container-low/80 dark:bg-slate-800/80 border border-outline-variant/20 dark:border-slate-700 flex items-center justify-between">
           <div>
-            <span className="text-[11px] uppercase tracking-wider text-on-surface-variant font-medium">
+            <span className="text-[11px] uppercase tracking-wider text-on-surface-variant dark:text-slate-400 font-medium">
               Total Starting Liquid Money
             </span>
             <div className="flex items-baseline gap-1 mt-0.5">
-              <span className="text-lg font-semibold text-secondary">GH₵</span>
+              <span className="text-lg font-semibold text-secondary dark:text-[#ffc657]">GH₵</span>
               <span className="text-2xl font-extrabold text-primary dark:text-white tabular-nums">
                 {formatMinor(totalLiquidMinor, 'GHS').replace('GH₵', '').trim()}
               </span>
             </div>
           </div>
-          <span className="px-2.5 py-1 rounded-full bg-tertiary-fixed/60 text-emerald-800 text-[11px] font-semibold">
+          <span className="px-2.5 py-1 rounded-full bg-tertiary-fixed/60 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-transparent dark:border-emerald-800 text-[11px] font-semibold">
             {drafts.length} liquid assets
           </span>
         </div>
@@ -287,17 +287,17 @@ export const LiquidOnboardingModal: React.FC<LiquidOnboardingModalProps> = ({
           {drafts.map((draft, idx) => (
             <div
               key={draft.id}
-              className="p-3.5 rounded-2xl bg-surface-container-low/40 border border-outline-variant/25 flex items-center justify-between gap-3 hover:bg-surface-container-low/70 transition-colors"
+              className="p-3.5 rounded-2xl bg-surface-container-low/40 dark:bg-slate-800/50 border border-outline-variant/25 dark:border-slate-700/80 flex items-center justify-between gap-3 hover:bg-surface-container-low/70 dark:hover:bg-slate-800/80 transition-colors"
             >
               <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="w-9 h-9 rounded-xl bg-surface-container-lowest flex items-center justify-center shadow-xs shrink-0">
+                <div className="w-9 h-9 rounded-xl bg-surface-container-lowest dark:bg-slate-900 flex items-center justify-center shadow-xs shrink-0">
                   {getAccountIcon(draft.type)}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-bold text-primary dark:text-white truncate">
                     {draft.name}
                   </p>
-                  <p className="text-[10px] text-on-surface-variant capitalize">
+                  <p className="text-[10px] text-on-surface-variant dark:text-slate-400 capitalize">
                     {draft.type.replace('_', ' ')}
                   </p>
                 </div>
@@ -305,21 +305,21 @@ export const LiquidOnboardingModal: React.FC<LiquidOnboardingModalProps> = ({
 
               {/* Amount input */}
               <div className="flex items-center gap-1.5 shrink-0">
-                <span className="text-xs font-medium text-on-surface-variant">GH₵</span>
+                <span className="text-xs font-medium text-on-surface-variant dark:text-slate-400">GH₵</span>
                 <input
                   type="text"
                   inputMode="decimal"
                   placeholder="Starting GH₵"
                   value={draft.balanceStr}
                   onChange={(e) => handleBalanceChange(idx, e.target.value)}
-                  className="w-24 px-2.5 py-1.5 rounded-xl bg-surface-container-lowest border border-outline-variant/30 text-xs font-bold text-primary dark:text-white text-right tabular-nums focus:outline-none focus:ring-2 focus:ring-secondary/40"
+                  className="w-24 px-2.5 py-1.5 rounded-xl bg-surface-container-lowest dark:bg-slate-900 border border-outline-variant/30 dark:border-slate-700 text-xs font-bold text-primary dark:text-white text-right tabular-nums focus:outline-none focus:ring-2 focus:ring-secondary/40"
                 />
                 {draft.isCustom && (
                   <button
                     type="button"
                     onClick={() => handleRemoveDraft(idx)}
                     aria-label={`Remove ${draft.name}`}
-                    className="w-7 h-7 text-outline hover:text-red-500 rounded-lg flex items-center justify-center transition-colors ml-1"
+                    className="w-7 h-7 text-outline dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 rounded-lg flex items-center justify-center transition-colors ml-1"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -330,7 +330,7 @@ export const LiquidOnboardingModal: React.FC<LiquidOnboardingModalProps> = ({
 
           {/* Add Custom Asset Section */}
           {showAddCustom ? (
-            <div className="p-4 rounded-2xl bg-surface-container-lowest border border-secondary/40 space-y-3 animate-in fade-in duration-150">
+            <div className="p-4 rounded-2xl bg-surface-container-lowest dark:bg-slate-800/90 border border-secondary/40 dark:border-amber-400/50 space-y-3 animate-in fade-in duration-150">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-primary dark:text-white">
                   Add Custom Asset / Account
@@ -338,7 +338,7 @@ export const LiquidOnboardingModal: React.FC<LiquidOnboardingModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowAddCustom(false)}
-                  className="text-xs text-outline hover:text-on-surface"
+                  className="text-xs text-outline dark:text-slate-400 hover:text-on-surface dark:hover:text-white"
                 >
                   Cancel
                 </button>
@@ -350,12 +350,12 @@ export const LiquidOnboardingModal: React.FC<LiquidOnboardingModalProps> = ({
                   placeholder="Account name (e.g. Telecel Cash, CalBank)"
                   value={customName}
                   onChange={(e) => setCustomName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-surface-container-low text-xs font-medium text-on-surface border border-outline-variant/20 focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-surface-container-low dark:bg-slate-900 text-xs font-medium text-on-surface dark:text-white border border-outline-variant/20 dark:border-slate-700 focus:outline-none"
                 />
                 <select
                   value={customType}
                   onChange={(e) => setCustomType(e.target.value as AccountType)}
-                  className="w-full px-3 py-2 rounded-xl bg-surface-container-low text-xs font-medium text-on-surface border border-outline-variant/20 focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-surface-container-low dark:bg-slate-900 text-xs font-medium text-on-surface dark:text-white border border-outline-variant/20 dark:border-slate-700 focus:outline-none"
                 >
                   <option value="cash">Cash</option>
                   <option value="mobile_money">Mobile Money</option>
@@ -373,12 +373,12 @@ export const LiquidOnboardingModal: React.FC<LiquidOnboardingModalProps> = ({
                   placeholder="Starting balance (optional)"
                   value={customBalance}
                   onChange={(e) => setCustomBalance(e.target.value)}
-                  className="flex-1 px-3 py-2 rounded-xl bg-surface-container-low text-xs font-medium text-on-surface border border-outline-variant/20 focus:outline-none"
+                  className="flex-1 px-3 py-2 rounded-xl bg-surface-container-low dark:bg-slate-900 text-xs font-medium text-on-surface dark:text-white border border-outline-variant/20 dark:border-slate-700 focus:outline-none"
                 />
                 <button
                   type="button"
                   onClick={handleAddCustomAsset}
-                  className="px-4 py-2 rounded-xl bg-primary text-white text-xs font-bold shadow-xs active:scale-95 transition-all"
+                  className="px-4 py-2 rounded-xl bg-primary dark:bg-[#ffc657] text-white dark:text-slate-950 text-xs font-bold shadow-xs active:scale-95 transition-all"
                 >
                   Add
                 </button>
@@ -391,7 +391,7 @@ export const LiquidOnboardingModal: React.FC<LiquidOnboardingModalProps> = ({
                 triggerHaptic();
                 setShowAddCustom(true);
               }}
-              className="w-full py-2.5 rounded-2xl border border-dashed border-outline-variant/50 text-on-surface-variant hover:text-primary hover:border-primary text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+              className="w-full py-2.5 rounded-2xl border border-dashed border-outline-variant/50 dark:border-slate-700 text-on-surface-variant dark:text-slate-400 hover:text-primary dark:hover:text-[#ffc657] hover:border-primary dark:hover:border-amber-400/50 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
             >
               <Plus className="w-4 h-4" />
               <span>Add another asset (Stocks, another MoMo, Bank)</span>
@@ -399,17 +399,17 @@ export const LiquidOnboardingModal: React.FC<LiquidOnboardingModalProps> = ({
           )}
 
           {/* Optional App Security (PIN & Biometrics) */}
-          <div className="p-4 rounded-2xl bg-surface-container-low/50 border border-outline-variant/30 space-y-3">
+          <div className="p-4 rounded-2xl bg-surface-container-low/50 dark:bg-slate-800/60 border border-outline-variant/30 dark:border-slate-700 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-surface-container-lowest text-primary flex items-center justify-center shadow-xs">
-                  <Lock className="w-4 h-4 text-secondary" />
+                <div className="w-8 h-8 rounded-xl bg-surface-container-lowest dark:bg-slate-900 text-primary dark:text-[#ffc657] flex items-center justify-center shadow-xs">
+                  <Lock className="w-4 h-4 text-secondary dark:text-[#ffc657]" />
                 </div>
                 <div>
                   <p className="text-xs font-bold text-primary dark:text-white">
                     App Security (Optional)
                   </p>
-                  <p className="text-[10px] text-on-surface-variant">
+                  <p className="text-[10px] text-on-surface-variant dark:text-slate-400">
                     Protect with 4-digit PIN or biometrics
                   </p>
                 </div>
@@ -425,15 +425,15 @@ export const LiquidOnboardingModal: React.FC<LiquidOnboardingModalProps> = ({
                   }}
                   className="sr-only peer"
                 />
-                <div className="w-10 h-5 bg-surface-container-high peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-secondary"></div>
+                <div className="w-10 h-5 bg-surface-container-high dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-secondary"></div>
               </label>
             </div>
 
             {enableSecurity && (
-              <div className="pt-2 border-t border-outline-variant/20 space-y-3 animate-in fade-in duration-200">
+              <div className="pt-2 border-t border-outline-variant/20 dark:border-slate-700 space-y-3 animate-in fade-in duration-200">
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="text-[10px] font-semibold text-on-surface-variant block mb-1">
+                    <label className="text-[10px] font-semibold text-on-surface-variant dark:text-slate-400 block mb-1">
                       4-Digit PIN
                     </label>
                     <input
@@ -446,11 +446,11 @@ export const LiquidOnboardingModal: React.FC<LiquidOnboardingModalProps> = ({
                         const val = e.target.value.replace(/\D/g, '').slice(0, 4);
                         setPin(val);
                       }}
-                      className="w-full px-3 py-2 rounded-xl bg-surface-container-lowest border border-outline-variant/30 text-center tracking-widest text-sm font-bold text-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-secondary/40"
+                      className="w-full px-3 py-2 rounded-xl bg-surface-container-lowest dark:bg-slate-900 border border-outline-variant/30 dark:border-slate-700 text-center tracking-widest text-sm font-bold text-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-secondary/40"
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-semibold text-on-surface-variant block mb-1">
+                    <label className="text-[10px] font-semibold text-on-surface-variant dark:text-slate-400 block mb-1">
                       Confirm PIN
                     </label>
                     <input
@@ -463,15 +463,15 @@ export const LiquidOnboardingModal: React.FC<LiquidOnboardingModalProps> = ({
                         const val = e.target.value.replace(/\D/g, '').slice(0, 4);
                         setConfirmPin(val);
                       }}
-                      className="w-full px-3 py-2 rounded-xl bg-surface-container-lowest border border-outline-variant/30 text-center tracking-widest text-sm font-bold text-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-secondary/40"
+                      className="w-full px-3 py-2 rounded-xl bg-surface-container-lowest dark:bg-slate-900 border border-outline-variant/30 dark:border-slate-700 text-center tracking-widest text-sm font-bold text-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-secondary/40"
                     />
                   </div>
                 </div>
 
                 {biometricSupported && (
-                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-surface-container-lowest border border-outline-variant/20">
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-surface-container-lowest dark:bg-slate-900 border border-outline-variant/20 dark:border-slate-700">
                     <div className="flex items-center gap-2">
-                      <Fingerprint className="w-4 h-4 text-secondary" />
+                      <Fingerprint className="w-4 h-4 text-secondary dark:text-[#ffc657]" />
                       <span className="text-xs font-semibold text-primary dark:text-white">
                         Enable Biometrics (Face/Fingerprint)
                       </span>
@@ -486,7 +486,7 @@ export const LiquidOnboardingModal: React.FC<LiquidOnboardingModalProps> = ({
                         }}
                         className="sr-only peer"
                       />
-                      <div className="w-8 h-4 bg-surface-container-high peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-secondary"></div>
+                      <div className="w-8 h-4 bg-surface-container-high dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-secondary"></div>
                     </label>
                   </div>
                 )}
@@ -495,19 +495,19 @@ export const LiquidOnboardingModal: React.FC<LiquidOnboardingModalProps> = ({
           </div>
 
           {errorMsg && (
-            <div className="p-3 rounded-xl bg-red-50 text-red-600 text-xs font-medium">
+            <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-300 text-xs font-medium">
               {errorMsg}
             </div>
           )}
         </div>
 
         {/* Footer Actions */}
-        <div className="pt-3 border-t border-outline-variant/20 space-y-2">
+        <div className="pt-3 border-t border-outline-variant/20 dark:border-slate-800 space-y-2">
           <button
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="w-full py-3.5 px-4 rounded-2xl bg-primary hover:bg-primary-container active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition-all disabled:opacity-50"
+            className="w-full py-3.5 px-4 rounded-2xl bg-primary hover:bg-primary-container dark:bg-[#ffc657] dark:text-slate-950 dark:hover:bg-[#f5bd50] active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition-all disabled:opacity-50"
           >
             <Check className="w-4 h-4 stroke-[3]" />
             <span>Save Liquid Assets</span>
@@ -516,7 +516,7 @@ export const LiquidOnboardingModal: React.FC<LiquidOnboardingModalProps> = ({
           <button
             type="button"
             onClick={handleSkip}
-            className="w-full py-2 text-center text-xs font-medium text-on-surface-variant hover:text-on-surface"
+            className="w-full py-2 text-center text-xs font-medium text-on-surface-variant dark:text-slate-400 hover:text-on-surface dark:hover:text-white transition-colors"
           >
             Skip for now (I will enter later)
           </button>

@@ -9,6 +9,15 @@
     padding: 0;
   }
   
+  html.dark {
+    color-scheme: dark;
+  }
+
+  html.dark body {
+    background-color: #070d1a;
+    color: #f1f5f9;
+  }
+  
   body {
     overscroll-behavior-y: none;
     -webkit-tap-highlight-color: transparent;

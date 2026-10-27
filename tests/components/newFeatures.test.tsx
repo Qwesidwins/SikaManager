@@ -44,25 +44,28 @@ describe('New Features: LaunchScreen, Salary/Stipends, Passcode/Biometrics, Ligh
     expect(freelanceCat).toBeUndefined();
   });
 
-  it('enforces light mode and ensures dark mode toggle is disabled/removed', async () => {
+  it('supports dark and light mode toggle in header and settings', async () => {
     render(<App />);
 
     await waitFor(() => {
       expect(screen.getByText('Total Balance')).toBeInTheDocument();
     });
 
-    // Verify root is in light mode
-    expect(document.documentElement.classList.contains('dark')).toBe(false);
+    // Verify theme toggle button exists in header
+    const toggleBtn = screen.getByLabelText(/Switch to dark mode/i);
+    expect(toggleBtn).toBeInTheDocument();
 
-    // Verify theme toggle button does not exist in header
-    expect(screen.queryByLabelText(/Switch to.*mode/i)).toBeNull();
+    // Toggle to dark mode
+    fireEvent.click(toggleBtn);
+    expect(document.documentElement.classList.contains('dark')).toBe(true);
 
-    // Open settings and verify appearance toggle is not present
+    // Open settings and verify appearance toggle is present
     const settingsBtn = screen.getByLabelText('Settings and security');
     fireEvent.click(settingsBtn);
 
     expect(screen.getByText('SikaManger Settings')).toBeInTheDocument();
-    expect(screen.queryByText('Appearance')).toBeNull();
+    expect(screen.getByText('Appearance')).toBeInTheDocument();
+    expect(screen.getByText(/Dark mode enabled/i)).toBeInTheDocument();
   });
 
   it('allows setting up a 4-digit PIN in settings and locking the app', async () => {

@@ -147,42 +147,42 @@ export const InstallPromptBanner: React.FC = () => {
       {/* iOS Safari Step-by-Step Instructions Modal */}
       {showIOSModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-          <div className="bg-surface-container-lowest max-w-sm w-full rounded-3xl p-6 shadow-2xl border border-outline-variant/30 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-2 border-b border-outline-variant/20">
-              <h3 className="text-base font-bold text-primary">Install on iPhone</h3>
+          <div className="bg-surface-container-lowest dark:bg-slate-900 max-w-sm w-full rounded-3xl p-6 shadow-2xl border border-outline-variant/30 dark:border-slate-800 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-2 border-b border-outline-variant/20 dark:border-slate-800">
+              <h3 className="text-base font-bold text-primary dark:text-white">Install on iPhone</h3>
               <button
                 type="button"
                 onClick={() => setShowIOSModal(false)}
-                className="w-8 h-8 rounded-full bg-surface-container-low text-on-surface-variant hover:text-on-surface flex items-center justify-center"
+                className="w-8 h-8 rounded-full bg-surface-container-low dark:bg-slate-800 text-on-surface-variant dark:text-slate-300 hover:text-on-surface dark:hover:text-white flex items-center justify-center"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <p className="text-xs text-on-surface-variant">
+            <p className="text-xs text-on-surface-variant dark:text-slate-400">
               Follow these two quick steps in Safari to add SikaManager to your home screen:
             </p>
 
             <div className="space-y-3">
-              <div className="flex items-start gap-3 p-3 rounded-2xl bg-surface-container-low">
-                <div className="w-8 h-8 rounded-xl bg-white text-secondary flex items-center justify-center shrink-0 shadow-xs">
+              <div className="flex items-start gap-3 p-3 rounded-2xl bg-surface-container-low dark:bg-slate-800">
+                <div className="w-8 h-8 rounded-xl bg-white dark:bg-slate-700 text-secondary dark:text-[#ffc657] flex items-center justify-center shrink-0 shadow-xs">
                   <Share className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-primary">1. Tap the Share button</p>
-                  <p className="text-[11px] text-on-surface-variant">
+                  <p className="text-xs font-bold text-primary dark:text-white">1. Tap the Share button</p>
+                  <p className="text-[11px] text-on-surface-variant dark:text-slate-400">
                     Look for the Share icon at the bottom of your Safari screen
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 p-3 rounded-2xl bg-surface-container-low">
-                <div className="w-8 h-8 rounded-xl bg-white text-secondary flex items-center justify-center shrink-0 shadow-xs">
+              <div className="flex items-start gap-3 p-3 rounded-2xl bg-surface-container-low dark:bg-slate-800">
+                <div className="w-8 h-8 rounded-xl bg-white dark:bg-slate-700 text-secondary dark:text-[#ffc657] flex items-center justify-center shrink-0 shadow-xs">
                   <PlusSquare className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-primary">2. Select &apos;Add to Home Screen&apos;</p>
-                  <p className="text-[11px] text-on-surface-variant">
+                  <p className="text-xs font-bold text-primary dark:text-white">2. Select &apos;Add to Home Screen&apos;</p>
+                  <p className="text-[11px] text-on-surface-variant dark:text-slate-400">
                     Scroll down and tap &quot;Add to Home Screen&quot; to install SikaManager as an app
                   </p>
                 </div>
@@ -192,7 +192,7 @@ export const InstallPromptBanner: React.FC = () => {
             <button
               type="button"
               onClick={handleDismiss}
-              className="w-full py-2.5 rounded-xl bg-primary text-white text-xs font-bold"
+              className="w-full py-2.5 rounded-xl bg-primary dark:bg-[#ffc657] text-white dark:text-slate-950 text-xs font-bold active:scale-95 transition-all"
             >
               Got it
             </button>

@@ -214,10 +214,10 @@ export const InsightsView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-primary dark:text-white flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-secondary" />
+            <TrendingUp className="w-5 h-5 text-secondary dark:text-[#ffc657]" />
             Insights & Analytics
           </h1>
-          <p className="text-xs text-on-surface-variant mt-0.5">
+          <p className="text-xs text-on-surface-variant dark:text-slate-400 mt-0.5">
             Monthly cash flow comparisons and category spending breakdown
           </p>
         </div>
@@ -229,8 +229,8 @@ export const InsightsView: React.FC = () => {
             onClick={() => setSelectedMonth('all')}
             className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
               selectedMonth === 'all'
-                ? 'bg-primary text-white shadow-xs'
-                : 'bg-surface-container-low text-on-surface-variant hover:text-on-surface'
+                ? 'bg-primary dark:bg-[#ffc657] text-white dark:text-slate-950 shadow-xs'
+                : 'bg-surface-container-low dark:bg-slate-800 text-on-surface-variant dark:text-slate-400 hover:text-on-surface dark:hover:text-white'
             }`}
           >
             All Time
@@ -242,8 +242,8 @@ export const InsightsView: React.FC = () => {
               onClick={() => setSelectedMonth(mKey)}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1 ${
                 selectedMonth === mKey
-                  ? 'bg-primary text-white shadow-xs'
-                  : 'bg-surface-container-low text-on-surface-variant hover:text-on-surface'
+                  ? 'bg-primary dark:bg-[#ffc657] text-white dark:text-slate-950 shadow-xs'
+                  : 'bg-surface-container-low dark:bg-slate-800 text-on-surface-variant dark:text-slate-400 hover:text-on-surface dark:hover:text-white'
               }`}
             >
               <Calendar className="w-3 h-3" />
@@ -256,99 +256,99 @@ export const InsightsView: React.FC = () => {
       {/* 4 Stat Cards for Selected Month / Scope */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Total Inflow */}
-        <div className="bg-surface-container-lowest rounded-[20px] p-4 border border-outline-variant/30 shadow-sm">
-          <div className="flex items-center justify-between text-on-surface-variant mb-2">
+        <div className="bg-surface-container-lowest dark:bg-slate-900 rounded-[20px] p-4 border border-outline-variant/30 dark:border-slate-800 shadow-sm">
+          <div className="flex items-center justify-between text-on-surface-variant dark:text-slate-400 mb-2">
             <span className="text-[11px] uppercase tracking-wider font-medium">Total Inflow</span>
-            <div className="w-7 h-7 rounded-lg bg-tertiary-fixed/50 text-emerald-800 flex items-center justify-center">
+            <div className="w-7 h-7 rounded-lg bg-tertiary-fixed/50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 flex items-center justify-center">
               <ArrowDownLeft className="w-3.5 h-3.5" />
             </div>
           </div>
-          <p className="text-base sm:text-lg font-bold text-emerald-600 truncate">
+          <p className="text-base sm:text-lg font-bold text-emerald-600 dark:text-emerald-400 truncate">
             {formatMinor(totalIncomeMinor, 'GHS')}
           </p>
-          <span className="text-[10px] text-on-surface-variant">
+          <span className="text-[10px] text-on-surface-variant dark:text-slate-400">
             {selectedMonth === 'all' ? 'All time income' : formatMonthLabel(selectedMonth)}
           </span>
         </div>
 
         {/* Total Outflow */}
-        <div className="bg-surface-container-lowest rounded-[20px] p-4 border border-outline-variant/30 shadow-sm">
-          <div className="flex items-center justify-between text-on-surface-variant mb-2">
+        <div className="bg-surface-container-lowest dark:bg-slate-900 rounded-[20px] p-4 border border-outline-variant/30 dark:border-slate-800 shadow-sm">
+          <div className="flex items-center justify-between text-on-surface-variant dark:text-slate-400 mb-2">
             <span className="text-[11px] uppercase tracking-wider font-medium">Total Outflow</span>
-            <div className="w-7 h-7 rounded-lg bg-red-100 dark:bg-red-950/60 text-red-700 flex items-center justify-center">
+            <div className="w-7 h-7 rounded-lg bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300 flex items-center justify-center">
               <ArrowUpRight className="w-3.5 h-3.5" />
             </div>
           </div>
-          <p className="text-base sm:text-lg font-bold text-red-600 truncate">
+          <p className="text-base sm:text-lg font-bold text-red-600 dark:text-red-400 truncate">
             {formatMinor(totalExpenseMinor, 'GHS')}
           </p>
-          <span className="text-[10px] text-on-surface-variant">
+          <span className="text-[10px] text-on-surface-variant dark:text-slate-400">
             {selectedMonth === 'all' ? 'All time expense' : formatMonthLabel(selectedMonth)}
           </span>
         </div>
 
         {/* Net Savings */}
-        <div className="bg-surface-container-lowest rounded-[20px] p-4 border border-outline-variant/30 shadow-sm">
-          <div className="flex items-center justify-between text-on-surface-variant mb-2">
+        <div className="bg-surface-container-lowest dark:bg-slate-900 rounded-[20px] p-4 border border-outline-variant/30 dark:border-slate-800 shadow-sm">
+          <div className="flex items-center justify-between text-on-surface-variant dark:text-slate-400 mb-2">
             <span className="text-[11px] uppercase tracking-wider font-medium">Net Savings</span>
-            <div className="w-7 h-7 rounded-lg bg-surface-container-low text-secondary flex items-center justify-center">
+            <div className="w-7 h-7 rounded-lg bg-surface-container-low dark:bg-slate-800 text-secondary dark:text-[#ffc657] flex items-center justify-center">
               <PiggyBank className="w-3.5 h-3.5" />
             </div>
           </div>
           <p
             className={`text-base sm:text-lg font-bold truncate ${
-              netSavingsMinor >= 0 ? 'text-primary dark:text-white' : 'text-red-500'
+              netSavingsMinor >= 0 ? 'text-primary dark:text-white' : 'text-red-500 dark:text-red-400'
             }`}
           >
             {netSavingsMinor < 0 ? '-' : ''}
             {formatMinor(Math.abs(netSavingsMinor), 'GHS')}
           </p>
-          <span className="text-[10px] text-on-surface-variant">
+          <span className="text-[10px] text-on-surface-variant dark:text-slate-400">
             {netSavingsMinor >= 0 ? 'Surplus retained' : 'Deficit spent'}
           </span>
         </div>
 
         {/* Savings Rate */}
-        <div className="bg-surface-container-lowest rounded-[20px] p-4 border border-outline-variant/30 shadow-sm">
-          <div className="flex items-center justify-between text-on-surface-variant mb-2">
+        <div className="bg-surface-container-lowest dark:bg-slate-900 rounded-[20px] p-4 border border-outline-variant/30 dark:border-slate-800 shadow-sm">
+          <div className="flex items-center justify-between text-on-surface-variant dark:text-slate-400 mb-2">
             <span className="text-[11px] uppercase tracking-wider font-medium">Savings Rate</span>
-            <div className="w-7 h-7 rounded-lg bg-surface-container-low text-primary flex items-center justify-center">
+            <div className="w-7 h-7 rounded-lg bg-surface-container-low dark:bg-slate-800 text-primary dark:text-[#ffc657] flex items-center justify-center">
               <Percent className="w-3.5 h-3.5" />
             </div>
           </div>
-          <p className="text-base sm:text-lg font-bold text-secondary truncate">
+          <p className="text-base sm:text-lg font-bold text-secondary dark:text-[#ffc657] truncate">
             {savingsRatePercent}%
           </p>
-          <span className="text-[10px] text-on-surface-variant">Of total income</span>
+          <span className="text-[10px] text-on-surface-variant dark:text-slate-400">Of total income</span>
         </div>
       </div>
 
       {!hasData ? (
-        <div className="py-16 text-center rounded-[24px] bg-surface-container-lowest border border-dashed border-outline-variant/40">
+        <div className="py-16 text-center rounded-[24px] bg-surface-container-lowest dark:bg-slate-900 border border-dashed border-outline-variant/40 dark:border-slate-800">
           <p className="text-sm font-semibold text-primary dark:text-white">No chart data yet</p>
-          <p className="text-xs text-on-surface-variant mt-1">
+          <p className="text-xs text-on-surface-variant dark:text-slate-400 mt-1">
             Log your first income or expense to see the visual analytics.
           </p>
         </div>
       ) : (
         <div className="space-y-6">
           {/* Chart 1: Month-by-Month Cash Flow (Income vs Expense side-by-side) */}
-          <div className="bg-surface-container-lowest rounded-[24px] p-5 border border-outline-variant/30 shadow-sm flex flex-col">
+          <div className="bg-surface-container-lowest dark:bg-slate-900 rounded-[24px] p-5 border border-outline-variant/30 dark:border-slate-800 shadow-sm flex flex-col">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-surface-container-low text-primary flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-surface-container-low dark:bg-slate-800 text-primary dark:text-[#ffc657] flex items-center justify-center">
                   <BarChart3 className="w-4 h-4" />
                 </div>
                 <div>
                   <h2 className="text-sm font-bold text-primary dark:text-white">
                     Month-by-Month Cashflow
                   </h2>
-                  <p className="text-[11px] text-on-surface-variant">
+                  <p className="text-[11px] text-on-surface-variant dark:text-slate-400">
                     Compare Income vs Expenses side-by-side per month
                   </p>
                 </div>
               </div>
-              <span className="text-[11px] font-semibold text-secondary bg-secondary-container/30 px-2.5 py-1 rounded-full">
+              <span className="text-[11px] font-semibold text-secondary dark:text-[#ffc657] bg-secondary-container/30 dark:bg-amber-400/20 px-2.5 py-1 rounded-full">
                 Monthly Trend
               </span>
             </div>
@@ -364,12 +364,14 @@ export const InsightsView: React.FC = () => {
                       name,
                     ]}
                     contentStyle={{
-                      backgroundColor: '#ffffff',
+                      backgroundColor: '#1e293b',
+                      color: '#f8fafc',
                       borderRadius: '12px',
-                      border: '1px solid #dce2f3',
+                      border: '1px solid #334155',
                       fontSize: '12px',
-                      boxShadow: '0 4px 12px rgba(20,33,61,0.08)',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
                     }}
+                    itemStyle={{ color: '#f8fafc' }}
                   />
                   <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
                   <Bar dataKey="income" name="Income" fill="#2E7D5B" radius={[6, 6, 0, 0]} maxBarSize={32} />
@@ -381,26 +383,26 @@ export const InsightsView: React.FC = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {/* Chart 2: Category Spending Breakdown */}
-            <div className="bg-surface-container-lowest rounded-[24px] p-5 border border-outline-variant/30 shadow-sm flex flex-col">
+            <div className="bg-surface-container-lowest dark:bg-slate-900 rounded-[24px] p-5 border border-outline-variant/30 dark:border-slate-800 shadow-sm flex flex-col">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-surface-container-low text-secondary flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-surface-container-low dark:bg-slate-800 text-secondary dark:text-[#ffc657] flex items-center justify-center">
                     <PieIcon className="w-4 h-4" />
                   </div>
                   <div>
                     <h2 className="text-sm font-bold text-primary dark:text-white">
                       Spending Breakdown
                     </h2>
-                    <p className="text-[11px] text-on-surface-variant">
+                    <p className="text-[11px] text-on-surface-variant dark:text-slate-400">
                       {selectedMonth === 'all' ? 'All time categories' : formatMonthLabel(selectedMonth)}
                     </p>
                   </div>
                 </div>
-                <span className="text-[11px] text-on-surface-variant">By Category</span>
+                <span className="text-[11px] text-on-surface-variant dark:text-slate-400">By Category</span>
               </div>
 
               {categoryBreakdownData.length === 0 ? (
-                <div className="flex-1 flex items-center justify-center py-12 text-outline text-xs">
+                <div className="flex-1 flex items-center justify-center py-12 text-outline dark:text-slate-500 text-xs">
                   No expense transactions in this period.
                 </div>
               ) : (
@@ -425,17 +427,19 @@ export const InsightsView: React.FC = () => {
                         <Tooltip
                           formatter={(value: number) => [`GH₵ ${value.toFixed(2)}`, 'Spent']}
                           contentStyle={{
-                            backgroundColor: '#ffffff',
+                            backgroundColor: '#1e293b',
+                            color: '#f8fafc',
                             borderRadius: '12px',
-                            border: '1px solid #dce2f3',
+                            border: '1px solid #334155',
                             fontSize: '12px',
-                            boxShadow: '0 4px 12px rgba(20,33,61,0.08)',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
                           }}
+                          itemStyle={{ color: '#f8fafc' }}
                         />
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                      <span className="text-[10px] uppercase font-semibold text-on-surface-variant">Spent</span>
+                      <span className="text-[10px] uppercase font-semibold text-on-surface-variant dark:text-slate-400">Spent</span>
                       <span className="text-xs font-bold text-primary dark:text-white">
                         GH₵ {(totalExpenseMinor / 100).toFixed(0)}
                       </span>
@@ -453,7 +457,7 @@ export const InsightsView: React.FC = () => {
                           </span>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-on-surface-variant tabular-nums font-semibold">
+                          <span className="text-on-surface-variant dark:text-slate-400 tabular-nums font-semibold">
                             {item.percent}%
                           </span>
                           <span className="text-primary dark:text-white font-bold tabular-nums">
@@ -468,35 +472,35 @@ export const InsightsView: React.FC = () => {
             </div>
 
             {/* Monthly History Summary List */}
-            <div className="bg-surface-container-lowest rounded-[24px] p-5 border border-outline-variant/30 shadow-sm flex flex-col">
+            <div className="bg-surface-container-lowest dark:bg-slate-900 rounded-[24px] p-5 border border-outline-variant/30 dark:border-slate-800 shadow-sm flex flex-col">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-surface-container-low text-primary flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-surface-container-low dark:bg-slate-800 text-primary dark:text-[#ffc657] flex items-center justify-center">
                     <Layers className="w-4 h-4" />
                   </div>
                   <div>
                     <h2 className="text-sm font-bold text-primary dark:text-white">
                       Monthly Summary
                     </h2>
-                    <p className="text-[11px] text-on-surface-variant">
+                    <p className="text-[11px] text-on-surface-variant dark:text-slate-400">
                       Income vs Expenses history
                     </p>
                   </div>
                 </div>
-                <span className="text-[11px] text-on-surface-variant font-medium">
+                <span className="text-[11px] text-on-surface-variant dark:text-slate-400 font-medium">
                   {monthlyData.length} {monthlyData.length === 1 ? 'month' : 'months'}
                 </span>
               </div>
 
-              <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1 divide-y divide-outline-variant/15">
+              <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1 divide-y divide-outline-variant/15 dark:divide-slate-800">
                 {[...monthlyData].reverse().map((m) => (
                   <div
                     key={m.key}
                     onClick={() => setSelectedMonth(m.key)}
                     className={`pt-2.5 first:pt-0 cursor-pointer p-2 rounded-xl transition-colors ${
                       selectedMonth === m.key
-                        ? 'bg-surface-container-low/80 ring-1 ring-primary'
-                        : 'hover:bg-surface-container-low/40'
+                        ? 'bg-surface-container-low/80 dark:bg-slate-800 ring-1 ring-primary dark:ring-amber-400/50'
+                        : 'hover:bg-surface-container-low/40 dark:hover:bg-slate-800/50'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
@@ -505,7 +509,7 @@ export const InsightsView: React.FC = () => {
                       </span>
                       <span
                         className={`text-xs font-bold tabular-nums ${
-                          m.netMinor >= 0 ? 'text-emerald-600' : 'text-red-500'
+                          m.netMinor >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'
                         }`}
                       >
                         {m.netMinor >= 0 ? '+' : ''}
@@ -513,11 +517,11 @@ export const InsightsView: React.FC = () => {
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between text-[11px] text-on-surface-variant">
-                      <span className="text-emerald-700 font-medium">
+                    <div className="flex items-center justify-between text-[11px] text-on-surface-variant dark:text-slate-400">
+                      <span className="text-emerald-700 dark:text-emerald-400 font-medium">
                         Income: +{formatMinor(m.incomeMinor, 'GHS')}
                       </span>
-                      <span className="text-red-600 font-medium">
+                      <span className="text-red-600 dark:text-red-400 font-medium">
                         Expense: -{formatMinor(m.expenseMinor, 'GHS')}
                       </span>
                     </div>
